@@ -7,11 +7,14 @@ import 'package:carousel/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'features/carousel/presentation/state/home_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
   runApp(MultiProvider(
     providers: [
+      ChangeNotifierProvider(create: (_) => sl<HomePageProvider>()),
       ChangeNotifierProvider(create: (_) => sl<WallpaperProvider>()),
       ChangeNotifierProvider(create: (_) => sl<ImageSelectionState>()),
       ChangeNotifierProvider(create: (_) => sl<SettingsProvider>()),

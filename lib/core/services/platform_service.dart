@@ -4,9 +4,9 @@ import 'dart:developer' as dev;
 class PlatformService {
   static const platform = MethodChannel('com.example.carousel/wallpaper');
 
-  Future<void> startLockScreenWallpaperChange() async {
+  Future<void> startLockScreenWallpaperChange(bool isRandom) async {
     try {
-      await platform.invokeMethod('startLockScreenWallpaperChange');
+      await platform.invokeMethod('startLockScreenWallpaperChange', {'isRandom': isRandom});
     } catch (e) {
       dev.log('Start Lock Screen Wallpaper Changes: $e');
     }

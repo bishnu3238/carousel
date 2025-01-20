@@ -11,7 +11,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-
   late SettingsProvider _settingsProvider;
 
   @override
@@ -27,23 +26,23 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('Settings'),
       ),
       body: Padding(
-          padding: const EdgeInsets.all(10),
-          child:   Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Lock Screen Carousel'),
-                  Switch(
-                    value: _settingsProvider.isCarouselEnabled,
-                    onChanged: (value){
-                      _settingsProvider.setCarouselEnabled(value);
-                    },
-                  )
-                ],
-              ),
-            ],
-          )
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            SwitchListTile(
+              value: _settingsProvider.isCarouselEnabled,
+              onChanged: _settingsProvider.setCarouselEnabled,
+              title: const Text("Lock Screen Carousel"),
+            ),
+            SwitchListTile(
+              value: _settingsProvider.isRandom,
+              onChanged: _settingsProvider.isCarouselEnabled
+                  ? _settingsProvider.setIsRandom
+                  : null,
+              title: const Text("Change Random"),
+            )
+          ],
+        ),
       ),
     );
   }

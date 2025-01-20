@@ -1,69 +1,50 @@
 package com.example.carousel
 
 import android.content.Intent
-import android.content.IntentFilter
-import android.util.Log
-import androidx.work.*
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import android.os.Build
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Context
-import androidx.core.content.ContextCompat
+import android.util.Log
 
-class MainActivity: FlutterActivity() {
 
+class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.carousel/wallpaper"
-    private var wallpaperChangeService: WallpaperChangeService? = null
-    private val FOREGROUND_CHANNEL_ID = "foreground_channel"
-
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
-                call, result ->
-            if (call.method == "startLockScreenWallpaperChange") {
-                startLockScreenWallpaperChange()
-                result.success("Wallpaper change started")
-            } else if (call.method == "stopLockScreenWallpaperChange") {
-                stopLockScreenWallpaperChange()
-                result.success("Wallpaper change stopped")
-            } else {
-                result.notImplemented()
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startLockScreenWallpaperChange" -> {
+                    Log.d("MainActivity", "startLockScreenWallpaperChange called from flutter")
+                    val isRandom = call.argument<Boolean>("isRandom") ?: true
+                    startLockScreenWallpaperChange(isRandom)
+                    result.success("Wallpaper change started")
+                }
+                "stopLockScreenWallpaperChange" -> {
+                    Log.d("MainActivity", "stopLockScreenWallpaperChange called from flutter")
+                    stopLockScreenWallpaperChange()
+                    result.success("Wallpaper change stopped")
+                }
+                else -> {
+                    Log.w("MainActivity", "Method ${call.method} not implemented")
+                    result.notImplemented()
+                }
             }
         }
-        createNotificationChannel()
-    }
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                FOREGROUND_CHANNEL_ID,
-                "Foreground Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
     }
 
-    private fun startLockScreenWallpaperChange() {
-        if (wallpaperChangeService == null) {
-            wallpaperChangeService = WallpaperChangeService()
-            val serviceIntent = Intent(this, WallpaperChangeService::class.java)
-            ContextCompat.startForegroundService(this, serviceIntent)
-
-            Log.d("MainActivity", "Started service for screen on events.")
-        }
+    private fun startLockScreenWallpaperChange(isRandom: Boolean) {
+        Log.d("MainActivity", "startLockScreenWallpaperChange called, isRandom: $isRandom")
+        val serviceIntent = Intent(this, WallpaperChangeService::class.java)
+        serviceIntent.putExtra("isRandom", isRandom)
+        ContextCompat.startForegroundService(this, serviceIntent)
 
     }
-    private fun stopLockScreenWallpaperChange(){
-        if (wallpaperChangeService != null) {
-            val serviceIntent = Intent(this, WallpaperChangeService::class.java)
-            stopService(serviceIntent)
-            wallpaperChangeService = null
-            Log.d("MainActivity", "Stopped service for screen on events.")
-        }
+
+    private fun stopLockScreenWallpaperChange() {
+        Log.d("MainActivity", "stopLockScreenWallpaperChange called")
+        val serviceIntent = Intent(this, WallpaperChangeService::class.java)
+        stopService(serviceIntent)
     }
 }

@@ -8,7 +8,19 @@ class Wallpaper extends Equatable{
 
   const Wallpaper({required this.path, this.isNetwork = false, this.id});
 
+
+
+
   @override
   List<Object?> get props => [path, isNetwork, id];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'path': path,
+      'isNetwork': isNetwork,
+      'id': id,
+    };
+  }
+
 
 }

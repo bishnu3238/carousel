@@ -18,7 +18,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/edit-wallpaper',
-      builder: (context, state) =>  EditWallpaperPage(),
+      builder: (context, state) =>  const EditWallpaperPage(),
     ),
     GoRoute(
       path: '/full-image',

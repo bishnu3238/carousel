@@ -2,102 +2,79 @@ package com.example.carousel
 
 import android.app.WallpaperManager
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import org.json.JSONArray
 import java.io.File
-import java.lang.Exception
-import kotlin.random.Random
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import android.graphics.Rect
-import com.google.gson.stream.JsonReader
 
-class ChangeWallpaperWorker(appContext: Context, workerParams: WorkerParameters):
-    Worker(appContext, workerParams) {
+class ChangeWallpaperWorker(context: Context, workerParams: WorkerParameters) :
+    Worker(context, workerParams) {
+    private val TAG = "ChangeWallpaperWorker"
+    companion object {
+        private var currentIndex = 0
+    }
 
-    // `doWork` is the method where actual work happens
     override fun doWork(): Result {
         return try {
-            // Call method to change the lock screen wallpaper.
-            changeLockScreenWallpaper()
-            Log.d("ChangeWallpaperWorker", "Wallpaper change task is successful")
+            val isRandom = inputData.getBoolean("isRandom", true)
+            Log.d(TAG, "doWork with random: $isRandom")
+            val wallpaperPaths = getWallpaperPaths("flutter.lock_screen_wallpapers")
+            Log.d(TAG, "Wallpaper paths: $wallpaperPaths")
+            if (wallpaperPaths.isEmpty()) {
+                Log.e(TAG, "No wallpapers found")
+                return Result.failure()
+            }
 
-            // If successfully wallpaper has been changed return success.
+            val selectedWallpaper = if (isRandom) {
+                wallpaperPaths.random()
+            } else {
+                val wallpaper = wallpaperPaths[currentIndex]
+                currentIndex = (currentIndex + 1) % wallpaperPaths.size
+                Log.d(TAG, "Selected wallpaper by index: $currentIndex and path is: $wallpaper")
+                wallpaper
+            }
+
+            setWallpaper(selectedWallpaper)
+            Log.d(TAG, "Wallpaper change task is successful image path: $selectedWallpaper")
             Result.success()
-        } catch (e: Exception){
-            Log.e("ChangeWallpaperWorker", "Failed to set Wallpaper: ${e.message}")
-            // If error occurred return failure and log the reason.
+        } catch (e: Exception) {
+            Log.e(TAG, "Error changing wallpaper: ${e.message}")
             Result.failure()
         }
     }
 
-    private fun changeLockScreenWallpaper(){
-        // getting shared preferences
+    private fun getWallpaperPaths(key: String): List<String> {
         val sharedPreferences = applicationContext.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        //  Get lock screen wallpaper paths from shared preferences, and if it is null return an empty list.
-        val lockScreenWallpapers =  applicationContext.getStringList("flutter." + "lock_screen_wallpapers")
-        // check if list is null or empty
-        if(lockScreenWallpapers.isNullOrEmpty()){
-            Log.d("ChangeWallpaperWorker", "Wallpaper list is empty")
+        val jsonString = sharedPreferences.getString(key, "[]") ?: "[]"
+
+        Log.d(TAG, "SharedPreferences JSON String: $jsonString")
+
+        return try {
+            val jsonArray = JSONArray(jsonString)
+            val paths = mutableListOf<String>()
+            for (i in 0 until jsonArray.length()) {
+                paths.add(jsonArray.getString(i))
+            }
+            Log.d(TAG, "Parsed paths: $paths")
+            paths
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing JSON string: ${e.message}")
+            emptyList()
+        }
+    }
+
+    private fun setWallpaper(path: String) {
+        val file = File(path)
+        if (!file.exists()) {
+            Log.e(TAG, "File does not exist: $path")
             return
         }
-        // Generate a random number with size of list
-        val random = Random.nextInt(lockScreenWallpapers.size);
-        // Select the random wallpaper from the list.
-        val selectedWallpaper = lockScreenWallpapers[random]
-        Log.d("ChangeWallpaperWorker", "Selected wallpaper is $selectedWallpaper")
-        try {
-            // Get wallpaper manager instance
-            val wallpaperManager = WallpaperManager.getInstance(applicationContext)
-            //Decode the selected wallpaper from path to Bitmap.
-            val bitmap = BitmapFactory.decodeFile(selectedWallpaper)
-            if(bitmap != null){
-                val rect = Rect(0,0, bitmap.width, bitmap.height)
-                // set bitmap to wallpaper manager, and add a rect, and `FLAG_LOCK` flag to indicate it should be applied on the lock screen.
-                wallpaperManager.setBitmap(bitmap,rect, true,  WallpaperManager.FLAG_LOCK )
-                Log.d("ChangeWallpaperWorker", "Successfully set wallpaper")
 
-            }else {
-                // If could not decode bitmap from path log a error.
-                Log.e("ChangeWallpaperWorker", "Failed to decode bitmap from path: $selectedWallpaper")
-            }
-        }
-        catch (e: Exception) {
-            // if any exception occurs log it.
-            Log.e("ChangeWallpaperWorker", "Exception while set wallpaper from path: $selectedWallpaper exception is: ${e.message}")
-        }
-
-    }
-    private fun Context.getStringList(key: String): List<String> {
-        val sharedPreferences = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val jsonString = sharedPreferences.getString(key, null)
-
-        if (jsonString == null) {
-            return emptyList()
-        }
-
-        val reader = JsonReader(jsonString.reader())
-        reader.isLenient = true
-        return try {
-            val type = object : TypeToken<List<String>>() {}.type
-            Gson().fromJson(reader, type)
-        }
-        catch (e: Exception) {
-            try {
-                val path = Gson().fromJson(reader, String::class.java);
-                return if(path != null) {
-                    listOf(path)
-                }else {
-                    emptyList()
-                }
-            }
-            catch (e: Exception) {
-                Log.e("ChangeWallpaperWorker", "Error parsing string list", e)
-                return emptyList()
-            }
-        }
+        val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+        val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+        wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK)
+        Log.d(TAG, "Wallpaper changed successfully")
     }
 }

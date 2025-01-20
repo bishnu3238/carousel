@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:flutter/material.dart';
@@ -46,14 +47,25 @@ class WallpaperGrid extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 Padding(
-                    padding: const EdgeInsets.all(1),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      child: Image.file(
-                        File(wallpaper.path),
-                        fit: BoxFit.cover,
-                      ),
-                    )),
+                  padding: const EdgeInsets.all(1),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    child: FadeInImage(
+                      image: FileImage(File(wallpaper.path)),
+                      placeholder: const AssetImage('assets/full.jpeg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                // Padding(
+                //     padding: const EdgeInsets.all(1),
+                //     child: ClipRRect(
+                //       borderRadius: const BorderRadius.all(Radius.circular(10)),
+                //       child: Image.file(
+                //         File(wallpaper.path),
+                //         fit: BoxFit.cover,
+                //       ),
+                //     )),
                 if (isEditing)
                   Align(
                     alignment: Alignment.bottomRight,

@@ -1,94 +1,67 @@
 package com.example.carousel
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.work.Constraints
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 
-class WallpaperChangeService: Service() {
+class WallpaperChangeService : Service() {
 
-    private var wallpaperChangeReceiver: WallpaperChangeReceiver? = null
-    private val FOREGROUND_CHANNEL_ID = "foreground_channel"
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
+    private var wallpaperChangeReceiver: BroadcastReceiver? = null
+    private val TAG = "WallpaperChangeService"
     override fun onCreate() {
-        startListeningScreenEvents()
         super.onCreate()
+        Log.d(TAG, "Service onCreate called")
+        startForeground(1, NotificationHelper.createForegroundNotification(this))
+//        registerReceiver()
+    }
+
+    override fun onDestroy() {
+        Log.d(TAG, "Service onDestroy called")
+        unregisterReceiver(wallpaperChangeReceiver)
+        wallpaperChangeReceiver = null
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
-        startForeground(1, buildNotification())
+        val isRandom = intent?.getBooleanExtra("isRandom", true) ?: true
+
+        Log.d(TAG, "Service onStartCommand called with isRandom = $isRandom")
+        // Pass isRandom to the BroadcastReceiver registration
+        registerReceiver(isRandom)
         return START_STICKY
     }
-    override fun onDestroy() {
-        stopListeningScreenEvents()
-        super.onDestroy()
-    }
-    private fun startListeningScreenEvents(){
-        wallpaperChangeReceiver = WallpaperChangeReceiver()
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_ON)
-            addAction(Intent.ACTION_USER_PRESENT)
-        }
-        registerReceiver(wallpaperChangeReceiver, filter)
-        Log.d("WallpaperChangeService", "Started listening for screen on events.")
-    }
 
-    private fun stopListeningScreenEvents(){
-        if (wallpaperChangeReceiver != null) {
-            unregisterReceiver(wallpaperChangeReceiver)
-            wallpaperChangeReceiver = null
-            Log.d("WallpaperChangeService", "Stopped listening for screen on events.")
-        }
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                FOREGROUND_CHANNEL_ID,
-                "Foreground Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun buildNotification(): Notification {
-        return NotificationCompat.Builder(this, FOREGROUND_CHANNEL_ID)
-            .setContentTitle("Wallpaper Change Service")
-            .setContentText("Changing Wallpaper On Every Wake")
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .build()
-    }
-    class WallpaperChangeReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_ON || intent.action == Intent.ACTION_USER_PRESENT) {
-                Log.d("WallpaperChangeReceiver", "Screen is on")
-                startWorkManager(context)
+    private fun registerReceiver(isRandom: Boolean) {
+        Log.d(TAG, "registerReceiver called")
+        wallpaperChangeReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d(TAG, "Intent received: ${intent?.action}")
+                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                    Log.d(TAG, "Screen is on intent")
+                     startWallpaperChangeWork(context!!, isRandom)
+                }
             }
         }
-        private fun startWorkManager(context: Context){
-            val constraints = Constraints.Builder()
-                .setRequiresBatteryNotLow(true)
-                .build()
-            val workRequest = OneTimeWorkRequestBuilder<ChangeWallpaperWorker>()
-                .setConstraints(constraints)
-                .build()
-            WorkManager.getInstance(context).enqueue(workRequest)
-        }
+        val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
+        registerReceiver(wallpaperChangeReceiver, filter)
+        Log.d(TAG, "receiver registered")
+
+    }
+
+    private fun startWallpaperChangeWork(context: Context, isRandom: Boolean) {
+        Log.d(TAG, "startWallpaperChangeWork called")
+        val workRequest = OneTimeWorkRequestBuilder<ChangeWallpaperWorker>()
+            .setInputData(androidx.work.Data.Builder().putBoolean("isRandom", isRandom).build())
+            .build()
+        WorkManager.getInstance(context).enqueue(workRequest)
+        Log.d(TAG, "WorkManager enqueued with isRandom = $isRandom")
     }
 }

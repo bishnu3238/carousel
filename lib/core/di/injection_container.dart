@@ -1,3 +1,4 @@
+import 'package:carousel/features/carousel/presentation/state/home_provider.dart';
 import 'package:carousel/features/carousel/presentation/state/settings_provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +15,6 @@ import '../state/wallpaper_provider.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
-
-
   // External
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
@@ -23,24 +22,22 @@ Future<void> init() async {
   // Service
   sl.registerLazySingleton(() => PlatformService());
 
-
   // Data sources
-  sl.registerLazySingleton<WallpaperLocalDataSource>(() => WallpaperLocalDataSourceImpl(sharedPreferences: sl()));
-  sl.registerLazySingleton<WallpaperRemoteDataSource>(() => WallpaperRemoteDataSourceImpl());
+  sl.registerLazySingleton<WallpaperLocalDataSource>(
+      () => WallpaperLocalDataSourceImpl(sharedPreferences: sl()));
+  sl.registerLazySingleton<WallpaperRemoteDataSource>(
+      () => WallpaperRemoteDataSourceImpl());
 
   // Repository
   sl.registerLazySingleton<WallpaperRepository>(
-          () => WallpaperRepositoryImpl(localDataSource: sl(), remoteDataSource: sl()));
+      () => WallpaperRepositoryImpl(localDataSource: sl(), remoteDataSource: sl()));
 
   // Use Cases
   sl.registerLazySingleton(() => WallpaperUseCase(repository: sl()));
 
-
-
-
   //Provider
   sl.registerFactory(() => WallpaperProvider());
+  sl.registerLazySingleton(() => HomePageProvider());
   sl.registerFactory(() => ImageSelectionState(sharedPreferences: sl()));
   sl.registerFactory(() => SettingsProvider());
-
 }
