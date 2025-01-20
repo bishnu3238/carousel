@@ -14,6 +14,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import android.graphics.Rect
 import com.google.gson.stream.JsonReader
+import com.google.gson.JsonSyntaxException
 
 class ChangeWallpaperWorker(appContext: Context, workerParams: WorkerParameters):
     Worker(appContext, workerParams) {
@@ -30,7 +31,7 @@ class ChangeWallpaperWorker(appContext: Context, workerParams: WorkerParameters)
         } catch (e: Exception){
             Log.e("ChangeWallpaperWorker", "Failed to set Wallpaper: ${e.message}")
             // If error occurred return failure and log the reason.
-            Result.failure()
+            return Result.failure()
         }
     }
 
@@ -38,7 +39,7 @@ class ChangeWallpaperWorker(appContext: Context, workerParams: WorkerParameters)
         // getting shared preferences
         val sharedPreferences = applicationContext.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         //  Get lock screen wallpaper paths from shared preferences, and if it is null return an empty list.
-        val lockScreenWallpapers =  applicationContext.getStringList("flutter." + "lock_screen_wallpapers")
+        val lockScreenWallpapers =  getStringList("flutter." + "lock_screen_wallpapers")
         // check if list is null or empty
         if(lockScreenWallpapers.isNullOrEmpty()){
             Log.d("ChangeWallpaperWorker", "Wallpaper list is empty")
@@ -73,31 +74,22 @@ class ChangeWallpaperWorker(appContext: Context, workerParams: WorkerParameters)
     }
     private fun Context.getStringList(key: String): List<String> {
         val sharedPreferences = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val jsonString = sharedPreferences.getString(key, null)
-
-        if (jsonString == null) {
-            return emptyList()
-        }
-
+        val jsonString = sharedPreferences.getString(key, null) ?: return emptyList()
+        Log.d("ChangeWallpaperWorker", "Json string is $jsonString")
         val reader = JsonReader(jsonString.reader())
         reader.isLenient = true
         return try {
             val type = object : TypeToken<List<String>>() {}.type
-            Gson().fromJson(reader, type)
+            Gson().fromJson<List<String>>(reader, type) ?: emptyList()
+        }
+        catch (e: JsonSyntaxException) {
+            // If parsing as a list fails, treat as a single string
+            Log.w("ChangeWallpaperWorker", "Parsing as a list failed, trying as a single string", e)
+            return  listOf(Gson().fromJson(reader, String::class.java))
         }
         catch (e: Exception) {
-            try {
-                val path = Gson().fromJson(reader, String::class.java);
-                return if(path != null) {
-                    listOf(path)
-                }else {
-                    emptyList()
-                }
-            }
-            catch (e: Exception) {
-                Log.e("ChangeWallpaperWorker", "Error parsing string list", e)
-                return emptyList()
-            }
+            Log.e("ChangeWallpaperWorker", "Error parsing string list", e)
+            return emptyList()
         }
     }
 }

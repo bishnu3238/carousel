@@ -11,7 +11,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-
   late SettingsProvider _settingsProvider;
 
   @override
@@ -28,7 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: Padding(
           padding: const EdgeInsets.all(10),
-          child:   Column(
+          child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -36,15 +35,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Text('Lock Screen Carousel'),
                   Switch(
                     value: _settingsProvider.isCarouselEnabled,
-                    onChanged: (value){
+                    onChanged: (value) {
                       _settingsProvider.setCarouselEnabled(value);
                     },
                   )
                 ],
               ),
             ],
-          )
-      ),
+          )),
     );
   }
 }

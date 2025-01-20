@@ -3,12 +3,15 @@ import 'package:carousel/core/services/platform_service.dart';
 import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as dev;
 
 import '../../../../core/state/wallpaper_provider.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final SharedPreferences _sharedPreferences = sl();
   final PlatformService _platformService = sl();
+  late WallpaperProvider _wallpaperProvider;
+
 
   bool _isCarouselEnabled = false;
   List<Wallpaper> _selectedLockScreenWallpapers = [];
@@ -16,67 +19,58 @@ class SettingsProvider extends ChangeNotifier {
   static const String _lockScreenEnabledKey = 'lock_screen_enabled';
   static const String _lockScreenWallpapersKey = 'lock_screen_wallpapers';
 
+
   SettingsProvider() {
+    _wallpaperProvider = sl<WallpaperProvider>();
     _loadState();
   }
 
   bool get isCarouselEnabled => _isCarouselEnabled;
   List<Wallpaper> get selectedLockScreenWallpapers => _selectedLockScreenWallpapers;
-  void setCarouselEnabled(bool value) {
+  void setCarouselEnabled(bool value){
     _isCarouselEnabled = value;
-    _saveState();
-    if (value) {
+    if(value){
+      _selectedLockScreenWallpapers = _wallpaperProvider.wallpapers;
       _startLockScreenWallpaperChange();
     } else {
       _stopLockScreenWallpaperChange();
     }
+    _saveState();
     notifyListeners();
   }
-
-  void setSelectedLockScreenWallpapers(List<Wallpaper> wallpapers) {
+  void setSelectedLockScreenWallpapers(List<Wallpaper> wallpapers){
     _selectedLockScreenWallpapers = wallpapers;
     _saveState();
     notifyListeners();
   }
-
   Future<void> _saveState() async {
     await _sharedPreferences.setBool(_lockScreenEnabledKey, _isCarouselEnabled);
-    if (_selectedLockScreenWallpapers.length == 1) {
-      final paths = _selectedLockScreenWallpapers.map((e) => e.path).toList();
-      await _sharedPreferences.setString(_lockScreenWallpapersKey, paths.first);
-    } else {
-      final paths = _selectedLockScreenWallpapers.map((e) => e.path).toList();
-      await _sharedPreferences.setStringList(_lockScreenWallpapersKey, paths);
-    }
-  }
+    final paths =  _selectedLockScreenWallpapers.map((e) => e.path).toList();
+    dev.log('Settings Providers: Paths  $paths');
+    await _sharedPreferences.setStringList(_lockScreenWallpapersKey, paths);
 
+
+  }
   Future<void> _loadState() async {
     final isEnabled = _sharedPreferences.getBool(_lockScreenEnabledKey);
-    if (isEnabled != null) {
+    if(isEnabled != null) {
       _isCarouselEnabled = isEnabled;
     }
-    if (_isCarouselEnabled) {
+    if(_isCarouselEnabled){
       _selectedLockScreenWallpapers = sl<WallpaperProvider>().wallpapers;
-    } else {
+      _startLockScreenWallpaperChange();
+    }else {
       final imagesPaths = _sharedPreferences.getStringList(_lockScreenWallpapersKey);
-      if (imagesPaths != null) {
-        _selectedLockScreenWallpapers =
-            imagesPaths.map((e) => Wallpaper(path: e)).toList();
+      if(imagesPaths != null){
+        _selectedLockScreenWallpapers = imagesPaths.map((e) =>  Wallpaper(path: e)).toList();
       } else {
-        final imagePath = _sharedPreferences.getString(_lockScreenWallpapersKey);
-        if (imagePath != null) {
-          _selectedLockScreenWallpapers = [Wallpaper(path: imagePath)];
-        } else {
-          _selectedLockScreenWallpapers = [];
-        }
+        _selectedLockScreenWallpapers = [];
       }
+      _stopLockScreenWallpaperChange();
+
     }
 
-    if (_isCarouselEnabled) {
-      _startLockScreenWallpaperChange();
-    } else {
-      _stopLockScreenWallpaperChange();
-    }
+
   }
 
   Future<void> _startLockScreenWallpaperChange() async {
@@ -94,4 +88,5 @@ class SettingsProvider extends ChangeNotifier {
       print("Error while stopping lock screen wallpaper service $e");
     }
   }
+
 }

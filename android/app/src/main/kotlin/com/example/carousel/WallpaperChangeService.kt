@@ -1,5 +1,6 @@
 package com.example.carousel
 
+import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -28,6 +29,7 @@ class WallpaperChangeService: Service() {
         super.onCreate()
     }
 
+    @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
         startForeground(1, buildNotification())
@@ -37,6 +39,7 @@ class WallpaperChangeService: Service() {
         stopListeningScreenEvents()
         super.onDestroy()
     }
+    @TargetApi(Build.VERSION_CODES.CUPCAKE)
     private fun startListeningScreenEvents(){
         wallpaperChangeReceiver = WallpaperChangeReceiver()
         val filter = IntentFilter().apply {

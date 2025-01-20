@@ -4,7 +4,6 @@ import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
 import 'package:carousel/features/carousel/presentation/state/image_selection_state.dart';
 import 'package:carousel/core/state/wallpaper_provider.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,7 +37,7 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
         title: const Text('Edit Wallpaper'),
       ),
       body: Stack(
-        children:[
+        children: [
           SingleChildScrollView(
             child: Center(
               child: Column(
@@ -47,7 +46,8 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
                   ElevatedButton(
                       onPressed: _pickImage, child: const Text('Pick single Image')),
                   ElevatedButton(
-                      onPressed: _pickMultipleImage, child: const Text('Pick Multiple Image')),
+                      onPressed: _pickMultipleImage,
+                      child: const Text('Pick Multiple Image')),
                   if (_imageSelectionState.selectedImage != null)
                     Image.file(_imageSelectionState.selectedImage!),
                   if (_imageSelectionState.selectedImages.isNotEmpty)
@@ -57,23 +57,28 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
                           itemCount: _imageSelectionState.selectedImages.length,
                           scrollDirection: Axis.horizontal,
                           itemBuilder: (context, index) {
-                            return   Padding(
+                            return Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Image.file(_imageSelectionState.selectedImages[index]),
+                              child:
+                                  Image.file(_imageSelectionState.selectedImages[index]),
                             );
                           }),
-                    )
-                  , if (_imageSelectionState.selectedImage != null || _imageSelectionState.selectedImages.isNotEmpty)
+                    ),
+                  if (_imageSelectionState.selectedImage != null ||
+                      _imageSelectionState.selectedImages.isNotEmpty)
                     ElevatedButton(
                         onPressed: () {
                           _saveWallpapers();
-                        }, child: const Text('Save Wallpaper')),
+                        },
+                        child: const Text('Save Wallpaper')),
                 ],
               ),
             ),
           ),
-          if(_isLoading)
-            const Center(child: CircularProgressIndicator(),)
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
         ],
       ),
     );
@@ -83,24 +88,26 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       File? croppedImage = await _cropImage(File(image.path));
-      if(croppedImage != null) {
+      if (croppedImage != null) {
         _imageSelectionState.setSelectedImage(croppedImage);
       }
     }
   }
+
   Future<void> _pickMultipleImage() async {
     final List<XFile> images = await _picker.pickMultiImage();
     List<File> croppedImages = [];
     if (images.isNotEmpty) {
       for (var image in images) {
         File? croppedImage = await _cropImage(File(image.path));
-        if(croppedImage != null) {
+        if (croppedImage != null) {
           croppedImages.add(croppedImage);
         }
       }
       _imageSelectionState.setSelectedImages(croppedImages);
     }
   }
+
   Future<File?> _cropImage(File imageFile) async {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
@@ -113,11 +120,12 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
       ],
       uiSettings: [
         AndroidUiSettings(
-            toolbarTitle: 'Cropper',
-            toolbarColor: Colors.deepOrange,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false),
+          toolbarTitle: 'Cropper',
+          toolbarColor: Colors.blueGrey[800],
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
         IOSUiSettings(
           title: 'Cropper',
         ),
@@ -128,6 +136,7 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
     }
     return null;
   }
+
   void _saveWallpapers() async {
     setState(() {
       _isLoading = true;
@@ -137,20 +146,19 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
     if (singleImage != null) {
       final wallpaper = Wallpaper(path: singleImage.path, id: DateTime.now().millisecond);
       final result = await _wallpaperUseCase.saveWallpaper(wallpaper);
-      result.fold((failure){
+      result.fold((failure) {
         setState(() {
           _isLoading = false;
         });
       }, (success) {
         _wallpaperProvider.addWallpaper(wallpaper);
       });
-
     }
     if (multipleImages.isNotEmpty) {
-      for(File image in multipleImages){
+      for (File image in multipleImages) {
         final wallpaper = Wallpaper(path: image.path, id: DateTime.now().millisecond);
         final result = await _wallpaperUseCase.saveWallpaper(wallpaper);
-        result.fold((failure){
+        result.fold((failure) {
           setState(() {
             _isLoading = false;
           });
@@ -162,12 +170,11 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
     setState(() {
       _isLoading = false;
     });
-    if(mounted){
+    if (mounted) {
       context.pop();
     }
 
     _imageSelectionState.setSelectedImage(null);
     _imageSelectionState.setSelectedImages([]);
-
   }
 }
