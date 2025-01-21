@@ -43,8 +43,8 @@ class ChangeWallpaperWorker(context: Context, workerParams: WorkerParameters) :
             Log.e(TAG, "Error changing wallpaper: ${e.message}")
             Result.failure()
         }
-    }
- 
+    } 
+
     private fun getWallpaperPaths(key: String): List<String> {
         val sharedPreferences = applicationContext.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val jsonString = sharedPreferences.getString(key, "[]") ?: "[]"
