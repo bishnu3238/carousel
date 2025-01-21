@@ -44,7 +44,7 @@ class ChangeWallpaperWorker(context: Context, workerParams: WorkerParameters) :
             Result.failure()
         }
     }
-
+ 
     private fun getWallpaperPaths(key: String): List<String> {
         val sharedPreferences = applicationContext.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val jsonString = sharedPreferences.getString(key, "[]") ?: "[]"
