@@ -11,15 +11,17 @@ class HomePageProvider extends ChangeNotifier {
 
   bool _isEditing = false;
   bool _isSelectAll = false;
-  List<Wallpaper> _selectedWallpapers = [];
+   List<Wallpaper> _selectedWallpapers = [];
 
   HomePageProvider() {
     _wallpaperProvider = sl<WallpaperProvider>();
-  }
+   }
+
 
   bool get isEditing => _isEditing;
   bool get isSelectAll => _isSelectAll;
   List<Wallpaper> get selectedWallpapers => _selectedWallpapers;
+
 
   void setIsEditing(bool value) {
     _isEditing = value;
@@ -29,14 +31,20 @@ class HomePageProvider extends ChangeNotifier {
 
   void setIsSelectAll(bool? value) {
     _isSelectAll = value ?? false;
+    if (_isSelectAll) return setSelectedAllWallpapers();
+    _selectedWallpapers.clear();
     notifyListeners();
   }
 
   void selectWallpaper(Wallpaper wallpaper) {
     if (_selectedWallpapers.contains(wallpaper)) {
       _selectedWallpapers.remove(wallpaper);
+      _isSelectAll = false;
     } else {
       _selectedWallpapers.add(wallpaper);
+    }
+    if (_wallpaperProvider.wallpapers.length == selectedWallpapers.length) {
+      setIsSelectAll(true);
     }
     notifyListeners();
   }

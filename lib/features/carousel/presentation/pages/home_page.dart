@@ -17,15 +17,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late HomePageProvider _homePageProvider;
-
   @override
-  void didChangeDependencies() {
-    _homePageProvider = Provider.of<HomePageProvider>(context, listen: false);
-    if (_homePageProvider.isSelectAll) {
-      _homePageProvider.setSelectedAllWallpapers();
-    }
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -35,8 +29,8 @@ class _HomePageState extends State<HomePage> {
       appBar: const HomeAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(10),
-        child: Consumer<WallpaperProvider>(
-          builder: (context, wallpaperProvider, child) {
+        child: Consumer2<WallpaperProvider, HomePageProvider>(
+          builder: (context, wallpaperProvider, homePageProvider, child) {
             final wallpapers = wallpaperProvider.wallpapers;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,9 +40,9 @@ class _HomePageState extends State<HomePage> {
                   child: wallpapers.isNotEmpty
                       ? WallpaperGrid(
                           wallpapers: wallpapers,
-                          isEditing: _homePageProvider.isEditing,
-                          selectedWallpapers: _homePageProvider.selectedWallpapers,
-                          onTap: _homePageProvider.selectWallpaper,
+                          isEditing: homePageProvider.isEditing,
+                          selectedWallpapers: homePageProvider.selectedWallpapers,
+                          onTap: homePageProvider.selectWallpaper,
                         )
                       : const EmptyWallpapers(),
                 )
@@ -57,23 +51,24 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      floatingActionButton:
-          _homePageProvider.isEditing && _homePageProvider.selectedWallpapers.isNotEmpty
+      floatingActionButton: Consumer<HomePageProvider>(
+        builder: (context, homePageProvider, _) {
+          return homePageProvider.isEditing &&
+                  homePageProvider.selectedWallpapers.isNotEmpty
               ? FloatingActionButton(
                   onPressed: () {
-                    _homePageProvider.removeSelectedWallpapers();
-                    _homePageProvider.setIsEditing(false);
-                    _homePageProvider.clearSelectedWallpapers();
+                    homePageProvider.removeSelectedWallpapers();
+                    homePageProvider.setIsEditing(false);
+                    homePageProvider.clearSelectedWallpapers();
                   },
                   child: const Icon(Icons.delete),
                 )
               : FloatingActionButton(
-                  onPressed: () {
-                    context.push('/edit-wallpaper');
-                  },
+                  onPressed: () => context.push('/edit-wallpaper'),
                   child: const Icon(Icons.add),
-                ),
+                );
+        },
+      ),
     );
   }
 }
-

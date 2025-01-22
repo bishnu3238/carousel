@@ -34,15 +34,16 @@ class WallpaperGrid extends StatelessWidget {
         return GestureDetector(
           onTap: isEditing
               ? () => onTap(wallpaper)
-              : () {
-                  context.push('/full-image', extra: wallpaper.path);
-                },
+              : () => context.push('/full-image', extra: wallpaper.path),
+          onDoubleTap: () => print("hello world"),
+          // context.push('/edit-wallpaper', extra: wallpaper.path),
           child: Container(
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: isEditing && isSelected
-                    ? Border.all(color: Colors.white, width: 2)
-                    : null),
+              borderRadius: BorderRadius.circular(10),
+              border: isEditing && isSelected
+                  ? Border.all(color: Colors.white, width: 2)
+                  : null,
+            ),
             child: Stack(
               fit: StackFit.expand,
               children: [

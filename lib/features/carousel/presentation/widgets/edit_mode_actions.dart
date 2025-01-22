@@ -1,5 +1,8 @@
+import 'package:carousel/core/util/app_constants.dart';
 import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/state/wallpaper_provider.dart';
@@ -19,17 +22,19 @@ class EditModeActions extends StatelessWidget {
             alignment: Alignment.topRight,
             child: homePageProvider.isEditing
                 ? Row(
-                    // mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton(
-                        onPressed: () {
-                          homePageProvider.setIsEditing(false);
-                        },
+                        onPressed: () => homePageProvider.setIsEditing(false),
                         child: const Text(
                           'Cancel',
                           style: TextStyle(color: Colors.blue),
                         ),
+                      ),
+                      Text(
+                        '${homePageProvider.selectedWallpapers.length} Selected',
+                        style: const TextStyle(color: Colors.white),
                       ),
                       CheckboxMenuButton(
                         value: homePageProvider.isSelectAll,
@@ -46,10 +51,21 @@ class EditModeActions extends StatelessWidget {
                         onLongPress: () {
                           homePageProvider.setIsEditing(true);
                         },
-                        child: TextButton(
-                          onPressed: () => homePageProvider.setIsEditing(true),
-                          child:
-                              const Text('Edit', style: TextStyle(color: Colors.white)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Wallpaper Select: (${wallpapers.length}/${AppConstants.wallpaperLimit})',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            TextButton(
+                              onPressed: () => homePageProvider.setIsEditing(true),
+                              child: const Text(
+                                'Edit',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
                       )
                     : const SizedBox(),
