@@ -30,9 +30,7 @@ class WallpaperChangeService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val isRandom = intent?.getBooleanExtra("isRandom", true) ?: true
-
         Log.d(TAG, "Service onStartCommand called with isRandom = $isRandom")
-        // Pass isRandom to the BroadcastReceiver registration
         registerReceiver(isRandom)
         return START_STICKY
     }
@@ -44,7 +42,7 @@ class WallpaperChangeService : Service() {
         wallpaperChangeReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 Log.d(TAG, "Intent received: ${intent?.action}")
-                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                 if (intent?.action == Intent.ACTION_SCREEN_ON) {
                     Log.d(TAG, "Screen is on intent")
                      startWallpaperChangeWork(context!!, isRandom)
                 }

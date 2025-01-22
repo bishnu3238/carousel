@@ -8,7 +8,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 
-object NotificationHelper {
+object NotificationHelper { 
     private const val CHANNEL_ID = "WallpaperServiceChannel"
     private const val TAG = "NotificationHelper"
     fun createForegroundNotification(context: Context): Notification {
