@@ -2,7 +2,6 @@ import 'package:carousel/core/di/injection_container.dart';
 import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/state/wallpaper_provider.dart';
 
 class HomePageProvider extends ChangeNotifier {

@@ -7,19 +7,14 @@ import android.util.Log
 import org.json.JSONArray
 
 object WallpaperChanger {
-
     private const val TAG = "WallpaperChanger"
 
     fun parsePathsFromJson(jsonString: String): List<String> {
         return try {
             val jsonArray = JSONArray(jsonString)
-            val paths = mutableListOf<String>()
-            for (i in 0 until jsonArray.length()) {
-                paths.add(jsonArray.getString(i))
-            }
-            paths
+            List(jsonArray.length()) { jsonArray.getString(it) }
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing JSON string: ${e.message}")
+            Log.e(TAG, "Error parsing JSON: ${e.message}")
             emptyList()
         }
     }

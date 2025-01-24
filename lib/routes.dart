@@ -2,7 +2,6 @@ import 'package:carousel/features/carousel/presentation/pages/edit_wallpaper_pag
 import 'package:carousel/features/carousel/presentation/pages/full_image_view_page.dart';
 import 'package:carousel/features/carousel/presentation/pages/home_page.dart';
 import 'package:carousel/features/carousel/presentation/pages/settings_page.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 final router = GoRouter(

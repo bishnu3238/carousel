@@ -18,11 +18,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
@@ -43,6 +38,14 @@ class _HomePageState extends State<HomePage> {
                           isEditing: homePageProvider.isEditing,
                           selectedWallpapers: homePageProvider.selectedWallpapers,
                           onTap: homePageProvider.selectWallpaper,
+                          onReorder: (oldIndex, newIndex) {
+                            debugPrint('oldIndex: $oldIndex, newIndex: $newIndex');
+                            setState(() {
+                              final wallpaper = wallpapers.removeAt(oldIndex);
+                              wallpapers.insert(newIndex, wallpaper);
+                              context.read<WallpaperProvider>().setWallpapers(wallpapers);
+                            });
+                          },
                         )
                       : const EmptyWallpapers(),
                 )

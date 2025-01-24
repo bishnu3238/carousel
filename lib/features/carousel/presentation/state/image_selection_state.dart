@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';

@@ -28,6 +28,7 @@ object NotificationHelper {
             .setContentTitle("Wallpaper Change Service")
             .setContentText("Listening for screen on events")
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_MIN) // Lowest priority for less visibility
             .build()
     }
 }

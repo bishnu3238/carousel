@@ -1,4 +1,3 @@
-import 'package:carousel/core/state/wallpaper_provider.dart';
 import 'package:carousel/features/carousel/presentation/state/settings_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

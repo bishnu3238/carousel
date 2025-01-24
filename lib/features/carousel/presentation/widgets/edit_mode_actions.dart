@@ -1,8 +1,5 @@
 import 'package:carousel/core/util/app_constants.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/state/wallpaper_provider.dart';

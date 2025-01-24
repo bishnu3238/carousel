@@ -72,7 +72,7 @@ class SparklePainterRotation extends CustomPainter {
 
       // Offset starts at bottom, moves upward
       final startY = size.height ; // Start from the bottom edge of cart icon
-      final endY = 0; // Move to the top
+      const endY = 0; // Move to the top
       final animatedY =
           startY + (endY - startY) * animationValue; // Interpolate Y position
 

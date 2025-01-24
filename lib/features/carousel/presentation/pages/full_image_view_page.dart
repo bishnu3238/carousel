@@ -2,19 +2,17 @@ import 'dart:io';
 
 import 'package:carousel/core/di/injection_container.dart';
 import 'package:carousel/core/state/wallpaper_provider.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/sparkly_painter.dart';
-import '../widgets/sparky_animation.dart';
 
 class FullImageViewPage extends StatefulWidget {
   final String imagePath;
 
-  const FullImageViewPage({Key? key, required this.imagePath}) : super(key: key);
+  const FullImageViewPage({super.key, required this.imagePath});
 
   @override
   State<FullImageViewPage> createState() => _FullImageViewPageState();

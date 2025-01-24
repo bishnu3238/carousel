@@ -1,5 +1,6 @@
 package com.example.carousel
 
+import android.annotation.TargetApi
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,24 +8,30 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import java.io.File
+import java.util.concurrent.Executors
 
 class WallpaperChangeService : Service() {
-
     private var wallpaperChangeReceiver: BroadcastReceiver? = null
     private val TAG = "WallpaperChangeService"
 
     private val wallpaperPaths = mutableListOf<String>()
-    private val wallpaperBitmaps = mutableListOf<Bitmap>()
     private var currentIndex = 0
+    private var lastChangeTime = 0L
 
+    private var currentBitmap: Bitmap? = null
+    private var nextBitmap: Bitmap? = null
+    private val executor = Executors.newSingleThreadExecutor()
+
+    @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service onCreate called")
         startForeground(1, NotificationHelper.createForegroundNotification(this))
-        preloadWallpapers() // Preload wallpapers when the service starts
+        preloadWallpapers()
     }
 
     override fun onDestroy() {
@@ -34,6 +41,7 @@ class WallpaperChangeService : Service() {
         super.onDestroy()
     }
 
+    @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val isRandom = intent?.getBooleanExtra("isRandom", true) ?: true
         Log.d(TAG, "Service onStartCommand called with isRandom = $isRandom")
@@ -49,9 +57,9 @@ class WallpaperChangeService : Service() {
         val jsonString = sharedPreferences.getString("flutter.lock_screen_wallpapers", "[]") ?: "[]"
 
         wallpaperPaths.clear()
-        wallpaperBitmaps.clear()
 
         try {
+            Log.d(TAG, "SharedPreferences JSON String: $jsonString")
             val paths = WallpaperChanger.parsePathsFromJson(jsonString)
             if (paths.isEmpty()) {
                 Log.e(TAG, "No valid paths found in JSON")
@@ -61,54 +69,81 @@ class WallpaperChangeService : Service() {
             for (path in paths) {
                 val file = File(path)
                 if (file.exists()) {
-                    wallpaperPaths.add(path) // Add path to the list
-                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                    if (bitmap != null) {
-                        wallpaperBitmaps.add(bitmap) // Add decoded bitmap to the list
-                    } else {
-                        Log.e(TAG, "Failed to decode bitmap for path: $path")
-                    }
+                    wallpaperPaths.add(path)
+                    Log.d(TAG, "Valid wallpaper path: $path")
                 } else {
                     Log.e(TAG, "File does not exist: $path")
                 }
             }
 
-            Log.d(TAG, "Preloaded ${wallpaperPaths.size} wallpaper paths and ${wallpaperBitmaps.size} bitmaps")
+            if (wallpaperPaths.isNotEmpty()) {
+                currentBitmap = decodeBitmap(File(wallpaperPaths[0]))
+                preloadNextWallpaper()
+                Log.d(TAG, "Preloaded ${wallpaperPaths.size} wallpaper paths")
+            } else {
+                Log.e(TAG, "No valid wallpapers to preload")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error preloading wallpapers: ${e.message}")
         }
     }
 
+    private fun preloadNextWallpaper() {
+        executor.execute {
+            val nextIndex = (currentIndex + 1) % wallpaperPaths.size
+            nextBitmap = decodeBitmap(File(wallpaperPaths[nextIndex]))
+            Log.d(TAG, "Next wallpaper preloaded: $nextIndex")
+        }
+    }
+
     private fun registerReceiver(isRandom: Boolean) {
-        Log.d(TAG, "registerReceiver called")
         wallpaperChangeReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                Log.d(TAG, "Intent received: ${intent?.action}")
                 if (intent?.action == Intent.ACTION_SCREEN_ON) {
-                    Log.d(TAG, "Screen is on intent")
                     changeWallpaper(isRandom)
                 }
             }
         }
-        val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
-        registerReceiver(wallpaperChangeReceiver, filter)
-        Log.d(TAG, "receiver registered")
+        registerReceiver(wallpaperChangeReceiver, IntentFilter(Intent.ACTION_SCREEN_ON))
+        Log.d(TAG, "Receiver registered")
     }
 
     private fun changeWallpaper(isRandom: Boolean) {
-        if (wallpaperBitmaps.isEmpty()) {
-            Log.e(TAG, "No wallpapers preloaded")
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastChangeTime < 10000) { // Minimum 10-second delay
+            Log.d(TAG, "Skipping wallpaper change to save battery")
             return
         }
 
-        val selectedBitmap = if (isRandom) {
-            wallpaperBitmaps.random()
-        } else {
-            val bitmap = wallpaperBitmaps[currentIndex]
-            currentIndex = (currentIndex + 1) % wallpaperBitmaps.size
-            bitmap
+        lastChangeTime = currentTime
+
+        if (currentBitmap == null) {
+            Log.e(TAG, "No current wallpaper loaded - Check wallpaper paths or decoding issues")
+            return
         }
 
-        WallpaperChanger.setBitmapAsWallpaper(this, selectedBitmap)
+        WallpaperChanger.setBitmapAsWallpaper(this, currentBitmap!!)
+        Log.d(TAG, "Wallpaper set successfully")
+
+        // Move to the next wallpaper
+        currentIndex = if (isRandom) {
+            (wallpaperPaths.indices).random()
+        } else {
+            (currentIndex + 1) % wallpaperPaths.size
+        }
+
+        currentBitmap = nextBitmap // Use the preloaded bitmap
+        preloadNextWallpaper() // Preload the next wallpaper
+    }
+
+    private fun decodeBitmap(file: File): Bitmap? {
+        return try {
+            BitmapFactory.decodeFile(file.absolutePath, BitmapFactory.Options().apply {
+                inPreferredConfig = Bitmap.Config.ARGB_8888 // Highest quality
+            })
+        } catch (e: Exception) {
+            Log.e(TAG, "Error decoding bitmap: ${e.message}")
+            null
+        }
     }
 }

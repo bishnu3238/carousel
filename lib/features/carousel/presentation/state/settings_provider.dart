@@ -61,15 +61,11 @@ class SettingsProvider extends ChangeNotifier {
 
     await _sharedPreferences.setBool(_lockScreenEnabledKey, _isCarouselEnabled);
 
-    // Convert the list of wallpaper paths to a JSON string
     final pathsJson =
         jsonEncode(_selectedLockScreenWallpapers.map((e) => e.path).toList());
     await _sharedPreferences.setString(_lockScreenWallpapersKey, pathsJson);
 
     dev.log('Settings Providers: Paths $pathsJson');
-    // final paths = _selectedLockScreenWallpapers.map((e) => e.path).toList();
-    // dev.log('Settings Providers: Paths  $paths ${paths.runtimeType}');
-    // await _sharedPreferences.setStringList(_lockScreenWallpapersKey, paths);
   }
 
   Future<void> _loadState() async {
