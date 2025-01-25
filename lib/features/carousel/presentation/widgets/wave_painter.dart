@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class WavePainter extends CustomPainter {
@@ -13,7 +12,7 @@ class WavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final paint3 = Paint()
-      ..color = Colors.blue.withOpacity(0.5)
+      ..color = Colors.blue.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
 
     final path1 = Path()

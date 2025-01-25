@@ -13,8 +13,7 @@ class EditModeActions extends StatelessWidget {
     return Consumer<HomePageProvider>(
       builder: (context, homePageProvider, child) {
         var wallpapers = context.read<WallpaperProvider>().wallpapers;
-        return Padding(
-          padding: const EdgeInsets.only(top: 15, bottom: 10, right: 10),
+        return Card(
           child: Align(
             alignment: Alignment.topRight,
             child: homePageProvider.isEditing
@@ -26,7 +25,7 @@ class EditModeActions extends StatelessWidget {
                         onPressed: () => homePageProvider.setIsEditing(false),
                         child: const Text(
                           'Cancel',
-                          style: TextStyle(color: Colors.blue),
+                          // style: TextStyle(color: Colors.blue),
                         ),
                       ),
                       Text(
@@ -38,7 +37,7 @@ class EditModeActions extends StatelessWidget {
                         onChanged: homePageProvider.setIsSelectAll,
                         child: const Text(
                           'Select All',
-                          style: TextStyle(color: Colors.white),
+                          // style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
@@ -53,13 +52,12 @@ class EditModeActions extends StatelessWidget {
                           children: [
                             Text(
                               'Wallpaper Select: (${wallpapers.length}/${AppConstants.wallpaperLimit})',
-                              style: const TextStyle(color: Colors.white),
                             ),
                             TextButton(
                               onPressed: () => homePageProvider.setIsEditing(true),
                               child: const Text(
                                 'Edit',
-                                style: TextStyle(color: Colors.white),
+                                // style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ],

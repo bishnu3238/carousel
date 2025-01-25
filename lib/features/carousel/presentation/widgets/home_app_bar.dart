@@ -12,7 +12,6 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: TextStyle(color: Colors.white),
       ),
       centerTitle: true,
-      backgroundColor: Colors.black,
       iconTheme: const IconThemeData(color: Colors.white),
       actions: [
         IconButton(

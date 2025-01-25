@@ -1,4 +1,5 @@
 import 'package:carousel/features/carousel/presentation/state/settings_provider.dart';
+import 'package:carousel/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -39,7 +40,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   ? _settingsProvider.setIsRandom
                   : null,
               title: const Text("Change Random"),
-            )
+            ),
+            Consumer<ThemeManager>(builder: (context, themeProvider, child) {
+              return SwitchListTile(
+                value: themeProvider.isDarkMode,
+                onChanged: (value) => themeProvider.toggleTheme(),
+                title: const Text("Dark Theme"),
+              );
+            }),
           ],
         ),
       ),

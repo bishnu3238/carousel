@@ -1,26 +1,14 @@
 import 'package:carousel/core/di/injection_container.dart';
 import 'package:carousel/core/util/app_constants.dart';
-import 'package:carousel/core/state/wallpaper_provider.dart';
-import 'package:carousel/features/carousel/presentation/state/image_selection_state.dart';
-import 'package:carousel/features/carousel/presentation/state/settings_provider.dart';
 import 'package:carousel/routes.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'features/carousel/presentation/state/home_provider.dart';
+import 'carousel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => sl<HomePageProvider>()),
-      ChangeNotifierProvider(create: (_) => sl<WallpaperProvider>()),
-      ChangeNotifierProvider(create: (_) => sl<ImageSelectionState>()),
-      ChangeNotifierProvider(create: (_) => sl<SettingsProvider>()),
-    ],
-    child: const MyApp(),
-  ));
+  runApp(const Carousel());
 }
 
 class MyApp extends StatelessWidget {

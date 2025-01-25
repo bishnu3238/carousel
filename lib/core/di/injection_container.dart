@@ -10,6 +10,7 @@ import '../../features/carousel/data/repositories/wallpaper_repository_impl.dart
 import '../../features/carousel/domain/repositories/wallpaper_repository.dart';
 import '../../features/carousel/domain/usecases/wallpaper_usecase.dart';
 import '../../features/carousel/presentation/state/image_selection_state.dart';
+import '../../theme/theme_manager.dart';
 import '../services/image_click_service.dart';
 import '../services/platform_service.dart';
 import '../state/wallpaper_provider.dart';
@@ -27,6 +28,8 @@ Future<void> init() async {
   // Service
   sl.registerLazySingleton(() => PlatformService());
   sl.registerLazySingleton(() => ImageClickService(picker: picker));
+
+  sl.registerLazySingleton<ThemeManager>(() => ThemeManager());
 
   // Data sources
   sl.registerLazySingleton<WallpaperLocalDataSource>(
