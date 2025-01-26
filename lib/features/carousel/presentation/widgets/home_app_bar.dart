@@ -7,16 +7,17 @@ class HomeAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
+      pinned: true,
+      
       title: const Text(
         'Carousel Wallpapers',
         style: TextStyle(color: Colors.white),
       ),
-      centerTitle: true,
-      pinned: true,
+
       iconTheme: const IconThemeData(color: Colors.white),
       actions: [
         IconButton(
-            icon: const Icon(Icons.settings), onPressed: () => context.push('/settings'))
+          icon: const Icon(Icons.settings), onPressed: () => context.push('/settings'),)
       ],
     );
   }

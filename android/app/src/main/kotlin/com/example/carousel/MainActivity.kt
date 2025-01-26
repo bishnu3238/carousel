@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -30,8 +31,7 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "requestBatteryOptimizationExemption" -> {
-                    requestBatteryOptimizationExemption()
-                    result.success("Battery optimization exemption requested")
+                    requestBatteryOptimizationExemption(result)
                 }
 
                 else -> result.notImplemented()
@@ -40,15 +40,14 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun startLockScreenWallpaperChange(isRandom: Boolean) {
-        val serviceIntent = Intent(this, WallpaperChangeService::class.java)
-        serviceIntent.putExtra("isRandom", isRandom)
+        val serviceIntent = Intent(this, WallpaperChangeService::class.java).apply {
+            putExtra("isRandom", isRandom)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ContextCompat.startForegroundService(serviceIntent)
+            ContextCompat.startForegroundService(this, serviceIntent)
         } else {
             startService(serviceIntent)
         }
-//        startService(serviceIntent)
-//        ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     private fun stopLockScreenWallpaperChange() {
@@ -56,14 +55,33 @@ class MainActivity : FlutterActivity() {
         stopService(serviceIntent)
     }
 
-    private fun requestBatteryOptimizationExemption() {
+    private fun requestBatteryOptimizationExemption(result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
             if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                intent.data = android.net.Uri.parse("package:$packageName")
-                startActivity(intent)
+                try {
+                    val intent =
+                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = android.net.Uri.parse("package:$packageName")
+                        }
+                    startActivity(intent)
+                    result.success("Battery optimization exemption requested")
+                } catch (e: Exception) {
+                    result.error(
+                        "EXEMPTION_ERROR",
+                        "Failed to request battery optimization exemption",
+                        e.localizedMessage
+                    )
+                }
+            } else {
+                result.success("Already exempt from battery optimization")
             }
+        } else {
+            result.error(
+                "NOT_SUPPORTED",
+                "Battery optimization exemption not supported on this Android version",
+                null
+            )
         }
     }
 }

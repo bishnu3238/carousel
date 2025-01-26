@@ -5,7 +5,6 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -21,7 +20,7 @@ object WallpaperChanger {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
+    @TargetApi(24)
     suspend fun setBitmapAsWallpaper(context: Context, bitmap: Bitmap) {
         withContext(Dispatchers.IO) {
             try {
@@ -38,8 +37,7 @@ object WallpaperChanger {
             try {
                 BitmapFactory.decodeFile(filePath, BitmapFactory.Options().apply {
                     inPreferredConfig = Bitmap.Config.ARGB_8888
-                    inSampleSize =
-                        calculateSampleSize(filePath) // Efficient decoding for large images
+                    inSampleSize = calculateSampleSize(filePath)
                 })
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -49,7 +47,6 @@ object WallpaperChanger {
     }
 
     private fun calculateSampleSize(filePath: String): Int {
-        // Placeholder implementation for image sample size calculation
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(filePath, options)
         val (width, height) = options.outWidth to options.outHeight
@@ -63,17 +60,3 @@ object WallpaperChanger {
         return sampleSize
     }
 }
-
-//did we not required this code to track changes on sharedpreferances and update changes as soon as enable or wallpaper list change from flutter side =  preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-//            when (key) {
-//                "flutter.lock_screen_random" -> {
-//                    isRandom = sharedPreferences.getBoolean(key, true)
-//                    Log.d(TAG, "isRandom updated: $isRandom")
-//                }
-//                "flutter.lock_screen_wallpapers" -> {
-//                    loadWallpapersFromPreferences()
-//                    Log.d(TAG, "Wallpapers updated dynamically: $wallpaperPaths")
-//                }
-//            }
-//        }
-//        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesListener)

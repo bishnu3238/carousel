@@ -17,7 +17,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: CustomScrollView(
-        slivers: [HomeAppBar(), EditModeActions(), WallpaperGrid()],
+        slivers: [
+          HomeAppBar(),
+          EditModeActions(),
+          WallpaperGrid(),
+        ],
       ),
       floatingActionButton: FloatButtonHome(),
     );

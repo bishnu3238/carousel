@@ -33,7 +33,9 @@ class WallpaperGrid extends StatelessWidget {
               ...wallpaperProvider.wallpapers.map(
                 (wallpaper) {
                   return WallpaperCard(
-                      key: ValueKey(wallpaper.path), wallpaper: wallpaper);
+                    key: ValueKey(wallpaper.path),
+                    wallpaper: wallpaper,
+                  );
                 },
               ),
           ],
