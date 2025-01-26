@@ -2,6 +2,7 @@ import 'package:carousel/core/di/injection_container.dart';
 import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
 import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/state/wallpaper_provider.dart';
 
 class HomePageProvider extends ChangeNotifier {
@@ -10,17 +11,17 @@ class HomePageProvider extends ChangeNotifier {
 
   bool _isEditing = false;
   bool _isSelectAll = false;
-   List<Wallpaper> _selectedWallpapers = [];
+  List<Wallpaper> _selectedWallpapers = [];
 
   HomePageProvider() {
     _wallpaperProvider = sl<WallpaperProvider>();
-   }
-
+  }
 
   bool get isEditing => _isEditing;
-  bool get isSelectAll => _isSelectAll;
-  List<Wallpaper> get selectedWallpapers => _selectedWallpapers;
 
+  bool get isSelectAll => _isSelectAll;
+
+  List<Wallpaper> get selectedWallpapers => _selectedWallpapers;
 
   void setIsEditing(bool value) {
     _isEditing = value;
@@ -68,5 +69,26 @@ class HomePageProvider extends ChangeNotifier {
         }
       });
     }
+  }
+
+  void reOrderWallpapers(int oldIndex, int newIndex) {
+    if (newIndex == 0 || oldIndex == 0) return; // Prevent reordering the "add" button
+    final adjustedOldIndex = oldIndex - 1; // Offset by "add" button
+    final adjustedNewIndex = newIndex - 1;
+
+    // Trigger the callback with adjusted indexes
+    final wallpapers = List.of(_wallpaperProvider.wallpapers); // Make a mutable copy
+    final wallpaper = wallpapers.removeAt(adjustedOldIndex); // Remove at old index
+    wallpapers.insert(adjustedNewIndex, wallpaper); // Insert wallpaper at new index
+    _wallpaperProvider.setWallpapers(wallpapers); // Update the provider
+  }
+
+  void selectAndDeselect(bool isSelected, Wallpaper wallpaper) {
+    if (isSelected) {
+      selectedWallpapers.remove(wallpaper);
+    } else {
+      selectedWallpapers.add(wallpaper);
+    }
+    notifyListeners();
   }
 }

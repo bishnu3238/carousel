@@ -18,8 +18,8 @@ class Carousel extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => sl<ThemeManager>()),
-        ChangeNotifierProvider(create: (_) => sl<HomePageProvider>()),
         ChangeNotifierProvider(create: (_) => sl<WallpaperProvider>()),
+        ChangeNotifierProvider(create: (_) => sl<HomePageProvider>()),
         ChangeNotifierProvider(create: (_) => sl<ImageSelectionState>()),
         ChangeNotifierProvider(create: (_) => sl<SettingsProvider>()),
       ],

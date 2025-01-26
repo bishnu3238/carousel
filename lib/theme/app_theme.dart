@@ -7,7 +7,7 @@ class AppThemes {
     primaryColor: const Color(0x1F08EDFF),
     scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(
-      color: Colors.blue,
+      color: Colors.deepPurpleAccent,
       elevation: 0,
       titleTextStyle:
           TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
@@ -17,7 +17,7 @@ class AppThemes {
       bodyMedium: TextStyle(color: Colors.black87),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.purpleAccent,
       foregroundColor: Colors.white,
     ),
     buttonTheme: const ButtonThemeData(

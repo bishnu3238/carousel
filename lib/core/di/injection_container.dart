@@ -1,5 +1,6 @@
 import 'package:carousel/features/carousel/presentation/state/home_provider.dart';
 import 'package:carousel/features/carousel/presentation/state/settings_provider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,20 +34,23 @@ Future<void> init() async {
 
   // Data sources
   sl.registerLazySingleton<WallpaperLocalDataSource>(
-      () => WallpaperLocalDataSourceImpl(sharedPreferences: sl()));
+          () => WallpaperLocalDataSourceImpl(sharedPreferences: sl()));
   sl.registerLazySingleton<WallpaperRemoteDataSource>(
-      () => WallpaperRemoteDataSourceImpl());
+          () => WallpaperRemoteDataSourceImpl());
 
   // Repository
-  sl.registerLazySingleton<WallpaperRepository>(
-      () => WallpaperRepositoryImpl(localDataSource: sl(), remoteDataSource: sl()));
+  sl.registerLazySingleton<WallpaperRepository>(() =>
+      WallpaperRepositoryImpl(
+        localDataSource: sl(),
+        remoteDataSource: sl(),
+      ));
 
   // Use Cases
   sl.registerLazySingleton(() => WallpaperUseCase(repository: sl()));
 
   //Provider
-  sl.registerFactory(() => WallpaperProvider());
+  sl.registerLazySingleton(() => WallpaperProvider());
   sl.registerLazySingleton(() => HomePageProvider());
-  sl.registerFactory(() => ImageSelectionState(sharedPreferences: sl()));
-  sl.registerFactory(() => SettingsProvider());
+  sl.registerLazySingleton(() => ImageSelectionState(sharedPreferences: sl()));
+  sl.registerLazySingleton(() => SettingsProvider());
 }
