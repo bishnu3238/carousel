@@ -1,66 +1,43 @@
 package com.example.carousel
 
-//import WallpaperChanger
 import android.annotation.TargetApi
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
+import android.util.LruCache
 import kotlinx.coroutines.*
 
 class WallpaperChangeService : Service() {
     private var wallpaperChangeReceiver: BroadcastReceiver? = null
-    private val TAG = "WallpaperChangeService"
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private lateinit var wallpaperCache: LruCache<Int, Bitmap>
 
     private val wallpaperPaths = mutableListOf<String>()
     private var currentIndex = 0
-    private var currentBitmap: Bitmap? = null
-    private var nextBitmap: Bitmap? = null
-    private var isRandom = true // Default value for `isRandom`
-    private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var preferencesListener: SharedPreferences.OnSharedPreferenceChangeListener
+    private var isRandom = true
 
-
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service created")
-        sharedPreferences = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        isRandom = sharedPreferences.getBoolean("flutter.lock_screen_random", true)
+
+        // Initialize LruCache for preloading wallpapers
+        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+        val cacheSize = calculateOptimalCacheSize(maxMemory)
+        wallpaperCache = LruCache(cacheSize)
+
         loadWallpapersFromPreferences()
-
-
-        preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            when (key) {
-                "flutter.lock_screen_random" -> {
-                    isRandom = sharedPreferences.getBoolean(key, true)
-                    Log.d(TAG, "isRandom updated: $isRandom")
-                }
-
-                "flutter.lock_screen_wallpapers" -> {
-                    loadWallpapersFromPreferences()
-                    Log.d(TAG, "Wallpapers updated dynamically: $wallpaperPaths")
-                }
-            }
-        }
-
-        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesListener)
-
+        preloadWallpapersInCache()
         startForeground(1, NotificationHelper.createForegroundNotification(this))
-        preloadWallpapers()
     }
 
     override fun onDestroy() {
         unregisterReceiver(wallpaperChangeReceiver)
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferencesListener)
-
+        serviceScope.cancel()
         super.onDestroy()
     }
 
@@ -75,86 +52,101 @@ class WallpaperChangeService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun loadWallpapersFromPreferences() {
+        val sharedPreferences =
+            getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val jsonString = sharedPreferences.getString("flutter.lock_screen_wallpapers", "[]") ?: "[]"
         wallpaperPaths.clear()
         wallpaperPaths.addAll(WallpaperChanger.parsePathsFromJson(jsonString))
-        Log.d(TAG, "Loaded wallpapers: $wallpaperPaths")
     }
 
-    private fun preloadWallpapers() {
-//        val sharedPreferences =
-//            getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-//        val jsonString = sharedPreferences.getString("flutter.lock_screen_wallpapers", "[]") ?: "[]"
-//        wallpaperPaths.clear()
-//        wallpaperPaths.addAll(WallpaperChanger.parsePathsFromJson(jsonString))
-
-        if (wallpaperPaths.isNotEmpty()) {
-            GlobalScope.launch {
-                currentBitmap = WallpaperChanger.decodeBitmap(wallpaperPaths[currentIndex])
-                val nextIndex = (currentIndex + 1) % wallpaperPaths.size
-                nextBitmap = WallpaperChanger.decodeBitmap(wallpaperPaths[nextIndex])
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+    private fun preloadWallpapersInCache() {
+        serviceScope.launch(Dispatchers.IO) {
+            for (i in wallpaperPaths.indices) {
+                try {
+                    if (wallpaperCache.get(i) == null) {
+                        wallpaperCache.put(
+                            i,
+                            WallpaperChanger.decodeBitmap(wallpaperPaths[i]) ?: continue
+                        )
+                    }
+                } catch (e: OutOfMemoryError) {
+                    e.printStackTrace()
+                    wallpaperCache.evictAll() // Clear cache to recover memory
+                }
             }
         }
     }
 
     private fun registerReceiver() {
-        wallpaperChangeReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_ON) {
-                    GlobalScope.launch { changeWallpaper() }
+        if (wallpaperChangeReceiver == null) {
+            wallpaperChangeReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                        serviceScope.launch { changeWallpaper() }
+                    }
                 }
             }
+            val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
+            registerReceiver(wallpaperChangeReceiver, filter)
         }
-        val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
-        registerReceiver(wallpaperChangeReceiver, filter)
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     private suspend fun changeWallpaper() {
         try {
-            if (currentBitmap == null) {
-                Log.e(TAG, "No current wallpaper loaded, setting default wallpaper")
-                setDefaultWallpaper()
-                return
-            }
-
-            WallpaperChanger.setBitmapAsWallpaper(this, currentBitmap!!)
-            Log.d(TAG, "Wallpaper changed successfully, isRandom: $isRandom")
-
             if (wallpaperPaths.isEmpty()) {
-                Log.e(TAG, "No wallpapers available")
+                // Log a warning when no wallpapers are available
+                println("Warning: No wallpapers available to set.")
                 return
             }
 
-            // Update the current and next wallpaper based on the `isRandom` flag
+            val bitmap = wallpaperCache.get(currentIndex) ?: run {
+                // Decode and cache if not already in memory
+                val decodedBitmap = WallpaperChanger.decodeBitmap(wallpaperPaths[currentIndex])
+                if (decodedBitmap != null) {
+                    wallpaperCache.put(currentIndex, decodedBitmap)
+                }
+                decodedBitmap
+            } ?: return
 
-            if (isRandom) {
-                // Pick a random wallpaper
-                currentIndex = (wallpaperPaths.indices).random()
-                currentBitmap = WallpaperChanger.decodeBitmap(wallpaperPaths[currentIndex])
+            WallpaperChanger.setBitmapAsWallpaper(this, bitmap)
 
+            // Prepare next wallpaper in advance
+            val nextIndex = if (isRandom) {
+                if (wallpaperPaths.size > 1) {
+                    generateSequence { (wallpaperPaths.indices).random() }.first { it != currentIndex }
+                } else {
+                    currentIndex
+                }
             } else {
-                currentIndex = (currentIndex + 1) % wallpaperPaths.size
-                currentBitmap = nextBitmap
-
-                val nextIndex = (currentIndex + 1) % wallpaperPaths.size
-                nextBitmap = WallpaperChanger.decodeBitmap(wallpaperPaths[nextIndex])
+                (currentIndex + 1) % wallpaperPaths.size
             }
+
+            if (wallpaperCache.get(nextIndex) == null) {
+                try {
+                    wallpaperCache.put(
+                        nextIndex,
+                        WallpaperChanger.decodeBitmap(wallpaperPaths[nextIndex]) ?: return
+                    )
+                } catch (e: OutOfMemoryError) {
+                    e.printStackTrace()
+                    wallpaperCache.evictAll() // Clear cache to recover memory
+                }
+            }
+
+            currentIndex = nextIndex
         } catch (e: Exception) {
-            Log.e(TAG, "Error changing wallpaper: ${e.message}")
+            e.printStackTrace()
         }
     }
 
-    private suspend fun setDefaultWallpaper() {
-        withContext(Dispatchers.IO) {
-            try {
-                val defaultWallpaper = BitmapFactory.decodeResource(
-                    resources, R.drawable.default_wallpaper
-                )
-                WallpaperChanger.setBitmapAsWallpaper(this@WallpaperChangeService, defaultWallpaper)
-                Log.d(TAG, "Default wallpaper set successfully")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error setting default wallpaper: ${e.message}")
-            }
+    private fun calculateOptimalCacheSize(maxMemory: Int): Int {
+        // Adjust cache size to ensure better memory handling
+        return when {
+            maxMemory < 16 * 1024 -> maxMemory / 8 // Low memory devices
+            maxMemory < 64 * 1024 -> maxMemory / 6 // Mid-range devices
+            else -> maxMemory / 4 // High-end devices
         }
     }
 }

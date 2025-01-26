@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -43,7 +42,13 @@ class MainActivity : FlutterActivity() {
     private fun startLockScreenWallpaperChange(isRandom: Boolean) {
         val serviceIntent = Intent(this, WallpaperChangeService::class.java)
         serviceIntent.putExtra("isRandom", isRandom)
-        ContextCompat.startForegroundService(this, serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+//        startService(serviceIntent)
+//        ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     private fun stopLockScreenWallpaperChange() {
