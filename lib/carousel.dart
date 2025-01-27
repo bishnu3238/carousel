@@ -28,11 +28,10 @@ class Carousel extends StatelessWidget {
           return Consumer<ThemeManager>(
             builder: (context, themeManager, _) {
               return MaterialApp.router(
-                debugShowCheckedModeBanner: false,
-                theme: themeManager.themeData, // Use the dynamic theme
-                title: AppConstants.appTitle,
-                routerConfig: router,
-              );
+                  debugShowCheckedModeBanner: false,
+                  theme: themeManager.themeData, // Use the dynamic theme
+                  title: AppConstants.appTitle,
+                  routerConfig: router);
             },
           );
         },

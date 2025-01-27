@@ -1,6 +1,8 @@
 package com.example.carousel
 
 import android.annotation.TargetApi
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -87,5 +89,26 @@ class WallpaperChangeService : Service() {
                 getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             sharedPreferences.unregisterOnSharedPreferenceChangeListener(it)
         }
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val restartServiceIntent = Intent(applicationContext, this::class.java).also {
+            it.setPackage(packageName)
+        }
+        val pendingIntent = PendingIntent.getService(
+            applicationContext, 1, restartServiceIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + 1000,
+            pendingIntent
+        )
+
+        // Adding log for debugging service restart
+        android.util.Log.d("WallpaperChangeService", "onTaskRemoved called. Restarting service.")
+
+        super.onTaskRemoved(rootIntent)
     }
 }

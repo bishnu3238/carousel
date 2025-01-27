@@ -12,13 +12,15 @@ import kotlinx.coroutines.withContext
 class WallpaperManagerHelper(private val context: Context) {
     private val wallpaperPaths = mutableListOf<String>()
     private val wallpaperCache: LruCache<Int, Bitmap>
-    private var currentIndex = 0
+    private var currentIndex: Int
     private var isRandom = true
 
     init {
         val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
         val cacheSize = maxMemory / 4
         wallpaperCache = LruCache(cacheSize.coerceAtLeast(10 * 1024)) // Minimum size of 10MB
+        val sharedPreferences = context.getSharedPreferences("WallpaperPrefs", Context.MODE_PRIVATE)
+        currentIndex = sharedPreferences.getInt("currentIndex", 0) // Load saved index
         loadWallpapersFromPreferences()
     }
 
@@ -46,7 +48,13 @@ class WallpaperManagerHelper(private val context: Context) {
             } else {
                 (currentIndex + 1) % wallpaperPaths.size
             }
+            saveCurrentIndex() // Save the new index
         }
+    }
+
+    private fun saveCurrentIndex() {
+        val sharedPreferences = context.getSharedPreferences("WallpaperPrefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putInt("currentIndex", currentIndex).apply()
     }
 
     fun loadWallpapersFromPreferences() {
