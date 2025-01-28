@@ -1,3 +1,4 @@
+import 'package:carousel/features/carousel/presentation/state/full_image_view_provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,4 +45,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => HomePageProvider());
   sl.registerLazySingleton(() => ImageSelectionState(sharedPreferences: sl()));
   sl.registerLazySingleton(() => SettingsProvider());
+  sl.registerLazySingleton(() => FullImageViewProvider());
 }

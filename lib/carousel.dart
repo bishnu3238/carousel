@@ -1,3 +1,4 @@
+import 'package:carousel/features/carousel/presentation/state/full_image_view_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,6 +23,7 @@ class Carousel extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => sl<HomePageProvider>()),
         ChangeNotifierProvider(create: (_) => sl<ImageSelectionState>()),
         ChangeNotifierProvider(create: (_) => sl<SettingsProvider>()),
+        ChangeNotifierProvider(create: (_) => sl<FullImageViewProvider>()),
       ],
       child: Builder(
         builder: (context) {

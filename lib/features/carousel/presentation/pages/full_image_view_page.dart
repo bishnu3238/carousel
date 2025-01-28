@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:carousel/features/carousel/presentation/state/full_image_view_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -84,6 +85,8 @@ class _FullImageViewPageState extends State<FullImageViewPage>
       const Icon(Icons.star, size: 10, color: Colors.orangeAccent),
       const Icon(Icons.star, size: 12, color: Colors.yellow),
     ];
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _scrollToThumbnail(isInitialScroll: true));
   }
 
   void _startAnimation() {
@@ -104,21 +107,37 @@ class _FullImageViewPageState extends State<FullImageViewPage>
 
   void _onPageChanged() {
     if (_pageController.page != null) {
-      setState(() {
-        _currentPageIndex = _pageController.page!.round();
-      });
-      _scrollToThumbnail();
+      final newPageIndex = _pageController.page!.round();
+      if (newPageIndex != _currentPageIndex) {
+        setState(() {
+          _currentPageIndex = newPageIndex;
+        });
+        _scrollToThumbnail();
+      }
     }
   }
 
-  void _scrollToThumbnail() {
-    if (_scrollController.hasClients) {
-      final screenWidth = MediaQuery.of(context).size.width;
-      _scrollController.animateTo(
-        _currentPageIndex * (screenWidth * 0.22),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+  void _scrollToThumbnail({bool isInitialScroll = false}) {
+    if (_scrollController.hasClients && _currentPageIndex < _thumbnailKeys.length) {
+      final keyContext = _thumbnailKeys[_currentPageIndex].currentContext;
+
+      if (keyContext != null) {
+        final renderObject = keyContext.findRenderObject();
+        if (renderObject != null) {
+          _scrollController.position.ensureVisible(
+            renderObject,
+            duration: isInitialScroll
+                ? const Duration(milliseconds: 0) // No animation on the initial scroll
+                : const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      } else if (isInitialScroll) {
+        // Directly scroll based on index and thumbnail size if context is not ready.
+        const thumbnailWidth = 80.0 + 10.0; // Thumbnail width + margin
+        final offset = _currentPageIndex * thumbnailWidth;
+        _scrollController.jumpTo(offset);
+      }
     }
   }
 
@@ -148,134 +167,141 @@ class _FullImageViewPageState extends State<FullImageViewPage>
     final wallpapers = _wallpaperProvider.wallpapers;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: PageView.builder(
-              controller: _pageController,
-              physics: const BouncingScrollPhysics(),
-              itemCount: wallpapers.length,
-              itemBuilder: (context, index) {
-                final wallpaper = wallpapers[index];
-                return InteractiveViewer(
-                  clipBehavior: Clip.none,
-                  maxScale: 5,
-                  child: Image.file(
-                    File(wallpaper.path),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    key: ValueKey<String>(wallpaper.path),
-                  ),
-                );
-              },
+      body: Consumer<FullImageViewProvider>(builder: (context, provider, _) {
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: provider.toggleIsFullScreen,
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                itemCount: wallpapers.length,
+                itemBuilder: (context, index) {
+                  final wallpaper = wallpapers[index];
+                  return InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    maxScale: 5,
+                    child: Image.file(
+                      File(wallpaper.path),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      key: ValueKey<String>(wallpaper.path),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          Positioned(
-            top: 30,
-            left: 10,
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-                const Text(
-                  'Preview',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 10,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    SizedBox(
-                      height: 100,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: wallpapers.length,
-                        itemBuilder: (context, index) {
-                          final wallpaper = wallpapers[index];
-                          final isSelected = index == _currentPageIndex;
-                          return GestureDetector(
-                            key: _thumbnailKeys[index],
-                            onTap: () {
-                              _startAnimation();
-                              _pageController.animateToPage(
-                                index,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 5),
-                              padding: const EdgeInsets.all(1),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [Colors.blue, Colors.purple],
-                                ),
-                                border: isSelected
-                                    ? Border.all(color: Colors.white, width: 2)
-                                    : null,
-                              ),
-                              child: Opacity(
-                                opacity: isSelected ? 1.0 : 0.7,
-                                child: ClipRRect(
-                                  borderRadius:
-                                      const BorderRadius.all(Radius.circular(10)),
-                                  child: Image.file(
-                                    File(wallpaper.path),
-                                    fit: BoxFit.cover,
-                                    width: 80,
-                                    height: 80,
-                                  ),
-                                ),
+            provider.isFullScreen
+                ? Positioned(
+                    top: 30,
+                    left: 10,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        ),
+                        const Text(
+                          'Preview',
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(),
+            provider.isFullScreen
+                ? Positioned(
+                    bottom: 10,
+                    left: 0,
+                    right: 0,
+                    child: Column(
+                      children: [
+                        Stack(
+                          children: [
+                            SizedBox(
+                              height: 130,
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                findChildIndexCallback: (d) {},
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: wallpapers.length,
+                                itemBuilder: (context, index) {
+                                  final wallpaper = wallpapers[index];
+                                  final isSelected = index == _currentPageIndex;
+                                  return GestureDetector(
+                                    key: _thumbnailKeys[index],
+                                    onTap: () {
+                                      _startAnimation();
+                                      _pageController.animateToPage(
+                                        index,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                                      padding: const EdgeInsets.all(1),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [Colors.blue, Colors.purple],
+                                        ),
+                                        border: isSelected
+                                            ? Border.all(color: Colors.white, width: 2)
+                                            : null,
+                                      ),
+                                      child: Opacity(
+                                        opacity: isSelected ? 1.0 : 0.7,
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              const BorderRadius.all(Radius.circular(10)),
+                                          child: Image.file(
+                                            File(wallpaper.path),
+                                            fit: BoxFit.cover,
+                                            width: 80,
+                                            height: 120,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    if (_showOverlay) // Show the overlay only when _showOverlay is true
-                      Positioned.fill(
-                        child: AnimatedBuilder(
-                          animation: _animation,
-                          builder: (context, child) {
-                            return CustomPaint(
-                              painter: SparklePainterRotation(
-                                animationValue: _animation.value,
-                                iconSize: 30.0,
-                                sparkleIcons: _sparkleIcons,
-                              ), // Assuming a base size of 24 for icon
-                            );
-                          },
+                            if (_showOverlay) // Show the overlay only when _showOverlay is true
+                              Positioned.fill(
+                                child: AnimatedBuilder(
+                                  animation: _animation,
+                                  builder: (context, child) {
+                                    return CustomPaint(
+                                      painter: SparklePainterRotation(
+                                        animationValue: _animation.value,
+                                        iconSize: 30.0,
+                                        sparkleIcons: _sparkleIcons,
+                                      ), // Assuming a base size of 24 for icon
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                  ],
-                ),
-                TextButton.icon(
-                  style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  onPressed: () => _removeWallpaper(_currentPageIndex),
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Remove'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                        TextButton.icon(
+                          style: TextButton.styleFrom(foregroundColor: Colors.white),
+                          onPressed: () => _removeWallpaper(_currentPageIndex),
+                          icon: const Icon(Icons.delete),
+                          label: const Text('Remove'),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(),
+          ],
+        );
+      }),
     );
   }
 }
