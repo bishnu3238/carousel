@@ -1,7 +1,7 @@
-import 'package:carousel/core/di/injection_container.dart';
 import 'package:flutter/material.dart';
 
 import 'carousel.dart';
+import 'core/di/injection_container.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

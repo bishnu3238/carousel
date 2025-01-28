@@ -1,9 +1,9 @@
-import 'package:carousel/core/di/injection_container.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/state/wallpaper_provider.dart';
+import '../../domain/entities/wallpaper.dart';
+import '../../domain/usecases/wallpaper_usecase.dart';
 
 class HomePageProvider extends ChangeNotifier {
   final WallpaperUseCase _wallpaperUseCase = sl();
@@ -91,4 +91,17 @@ class HomePageProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// TODO new methods'
+// Future<void> clickImage(BuildContext context) async {
+//   await _imageClickService
+//       .showImagePickingAlert(context, title: 'PICK WALLPAPERS', multi: true)
+//       .then((value) => value.fold(
+//             (l) => null,
+//             (List<XFile?> right) {
+//               addWallpaperUseCase.execute(right);
+//               dev.log(right.toString());
+//             },
+//           ));
+// }
 }

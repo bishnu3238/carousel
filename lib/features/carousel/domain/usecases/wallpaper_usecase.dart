@@ -1,7 +1,8 @@
-import 'package:carousel/core/error/failure.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:carousel/features/carousel/domain/repositories/wallpaper_repository.dart';
 import 'package:dartz/dartz.dart';
+
+import '../../../../core/error/failure.dart';
+import '../entities/wallpaper.dart';
+import '../repositories/wallpaper_repository.dart';
 
 class WallpaperUseCase {
   final WallpaperRepository repository;
@@ -12,7 +13,9 @@ class WallpaperUseCase {
     try {
       return await repository.getWallpapers();
     } catch (e) {
-      return Left(WallpaperUserCaseFailure(  'Failed to fetch wallpapers: $e',));
+      return Left(WallpaperUserCaseFailure(
+        'Failed to fetch wallpapers: $e',
+      ));
     }
   }
 
@@ -20,7 +23,7 @@ class WallpaperUseCase {
     try {
       return await repository.saveWallpaper(wallpaper);
     } catch (e) {
-      return Left(WallpaperUserCaseFailure(  'Failed to save wallpaper: $e'));
+      return Left(WallpaperUserCaseFailure('Failed to save wallpaper: $e'));
     }
   }
 
@@ -28,7 +31,7 @@ class WallpaperUseCase {
     try {
       return await repository.removeWallpaper(wallpaper);
     } catch (e) {
-      return Left(WallpaperUserCaseFailure(  'Failed to remove wallpaper: $e'));
+      return Left(WallpaperUserCaseFailure('Failed to remove wallpaper: $e'));
     }
   }
 }

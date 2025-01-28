@@ -1,8 +1,8 @@
-import 'package:carousel/core/util/app_constants.dart';
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/state/wallpaper_provider.dart';
+import '../../../../core/util/app_constants.dart';
 import '../state/home_provider.dart';
 
 class EditModeActions extends StatelessWidget {

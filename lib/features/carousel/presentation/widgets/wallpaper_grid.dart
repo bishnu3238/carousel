@@ -1,9 +1,10 @@
-import 'package:carousel/core/state/wallpaper_provider.dart';
-import 'package:carousel/theme/theme_manager.dart';
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
+import '../../../../core/state/wallpaper_provider.dart';
+import '../../../../theme/theme_manager.dart';
+import '../../domain/entities/wallpaper.dart';
 import '../state/home_provider.dart';
 import 'add_carousel_widget.dart';
 import 'empty_wallpapers.dart';
@@ -31,7 +32,7 @@ class WallpaperGrid extends StatelessWidget {
               const EmptyWallpapers(key: ValueKey('empty-wallpaper')),
             if (wallpapers.isNotEmpty)
               ...wallpaperProvider.wallpapers.map(
-                (wallpaper) {
+                (Wallpaper wallpaper) {
                   return WallpaperCard(
                     key: ValueKey(wallpaper.path),
                     wallpaper: wallpaper,

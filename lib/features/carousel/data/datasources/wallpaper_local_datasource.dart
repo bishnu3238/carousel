@@ -1,14 +1,17 @@
 import 'dart:convert';
-import 'package:carousel/core/error/exception.dart';
-import 'package:carousel/core/util/app_constants.dart';
-import 'package:carousel/features/carousel/data/models/wallpaper_model.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/error/exception.dart';
+import '../../../../core/util/app_constants.dart';
+import '../models/wallpaper_model.dart';
 
 abstract class WallpaperLocalDataSource {
   Future<List<WallpaperModel>> getWallpapers();
-  Future<bool> saveWallpaper(WallpaperModel wallpaper);
-  Future<bool> removeWallpaper(WallpaperModel wallpaper);
 
+  Future<bool> saveWallpaper(WallpaperModel wallpaper);
+
+  Future<bool> removeWallpaper(WallpaperModel wallpaper);
 }
 
 class WallpaperLocalDataSourceImpl implements WallpaperLocalDataSource {
@@ -19,11 +22,12 @@ class WallpaperLocalDataSourceImpl implements WallpaperLocalDataSource {
   @override
   Future<List<WallpaperModel>> getWallpapers() {
     final jsonString = sharedPreferences.getString(AppConstants.wallpaperKey);
-    if(jsonString != null){
+    if (jsonString != null) {
       final List decodedJson = json.decode(jsonString);
-      final List<WallpaperModel> wallpaperModels = decodedJson.map((e) => WallpaperModel.fromJson(e)).toList();
+      final List<WallpaperModel> wallpaperModels =
+          decodedJson.map((e) => WallpaperModel.fromJson(e)).toList();
       return Future.value(wallpaperModels);
-    }else {
+    } else {
       return Future.value([]);
     }
   }
@@ -53,6 +57,4 @@ class WallpaperLocalDataSourceImpl implements WallpaperLocalDataSource {
       throw const LocalStorageException('Failed to remove wallpaper');
     }
   }
-
-
 }

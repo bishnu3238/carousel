@@ -1,4 +1,3 @@
-import 'package:carousel/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +7,7 @@ import 'core/util/app_constants.dart';
 import 'features/carousel/presentation/state/home_provider.dart';
 import 'features/carousel/presentation/state/image_selection_state.dart';
 import 'features/carousel/presentation/state/settings_provider.dart';
+import 'routes.dart';
 import 'theme/theme_manager.dart';
 
 class Carousel extends StatelessWidget {

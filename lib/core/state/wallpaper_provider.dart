@@ -1,15 +1,15 @@
-import 'package:carousel/core/di/injection_container.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
 import 'package:flutter/material.dart';
 
+import '../../features/carousel/domain/entities/wallpaper.dart';
+import '../../features/carousel/domain/usecases/wallpaper_usecase.dart';
+import '../di/injection_container.dart';
+
 class WallpaperProvider extends ChangeNotifier {
-  final WallpaperUseCase wallpaperUseCase = sl() ;
+  final WallpaperUseCase wallpaperUseCase = sl();
+
   List<Wallpaper> _wallpapers = [];
   int _currentWallpaperIndex = 0;
   bool _isLoading = false;
-
-
 
   WallpaperProvider() {
     _loadWallpapers();
@@ -20,7 +20,6 @@ class WallpaperProvider extends ChangeNotifier {
   int get currentWallpaperIndex => _currentWallpaperIndex;
 
   bool get isLoading => _isLoading;
-
 
   void setWallpapers(List<Wallpaper> wallpapers) {
     _wallpapers = wallpapers;
@@ -36,6 +35,7 @@ class WallpaperProvider extends ChangeNotifier {
     _wallpapers.remove(wallpaper);
     notifyListeners();
   }
+
   void setCurrentWallpaperIndex(int index) {
     _currentWallpaperIndex = index;
     notifyListeners();
@@ -44,9 +44,8 @@ class WallpaperProvider extends ChangeNotifier {
   Future<void> _loadWallpapers() async {
     _isLoading = true;
     notifyListeners();
-    final result =  await wallpaperUseCase.getWallpapers();
-    result.fold((failure){
-    }, (wallpapers) {
+    final result = await wallpaperUseCase.getWallpapers();
+    result.fold((failure) {}, (wallpapers) {
       _wallpapers = wallpapers;
       notifyListeners();
     });
@@ -54,16 +53,15 @@ class WallpaperProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> deleteWallpaper(Wallpaper wallpaper) async {
+    final result = await wallpaperUseCase.removeWallpaper(wallpaper);
+    return result.fold(
+      (failure) => false, // Log or handle failure.
+      (success) => success,
+    );
+  }
 
-Future<bool> deleteWallpaper(Wallpaper wallpaper) async {
-  final result = await wallpaperUseCase.removeWallpaper(wallpaper);
-  return result.fold(
-        (failure) => false, // Log or handle failure.
-        (success) => success,
-  );
-}
-
-Future<void> refreshWallpapers() async {
-  await _loadWallpapers();
-}
+  Future<void> refreshWallpapers() async {
+    await _loadWallpapers();
+  }
 }

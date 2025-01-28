@@ -21,7 +21,6 @@ class WallpaperChangeService : Service() {
     private var wallpaperChangeReceiver: BroadcastReceiver? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    //    private val wallpaperManager = WallpaperManagerHelper(this)
     private lateinit var wallpaperManager: WallpaperManagerHelper
     private var preferencesListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 

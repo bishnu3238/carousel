@@ -1,13 +1,13 @@
 import 'dart:convert';
-
-import 'package:carousel/core/di/injection_container.dart';
-import 'package:carousel/core/services/platform_service.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as dev;
 
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/platform_service.dart';
 import '../../../../core/state/wallpaper_provider.dart';
+import '../../domain/entities/wallpaper.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final SharedPreferences _sharedPreferences = sl();
@@ -29,7 +29,9 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   bool get isRandom => _isRandom;
+
   bool get isCarouselEnabled => _isCarouselEnabled;
+
   List<Wallpaper> get selectedLockScreenWallpapers => _selectedLockScreenWallpapers;
 
   void setCarouselEnabled(bool value) {

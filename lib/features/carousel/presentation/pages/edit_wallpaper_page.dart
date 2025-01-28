@@ -1,14 +1,16 @@
 import 'dart:io';
-import 'package:carousel/core/di/injection_container.dart';
-import 'package:carousel/features/carousel/domain/entities/wallpaper.dart';
-import 'package:carousel/features/carousel/domain/usecases/wallpaper_usecase.dart';
-import 'package:carousel/features/carousel/presentation/state/image_selection_state.dart';
-import 'package:carousel/core/state/wallpaper_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:image_cropper/image_cropper.dart';
+
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/state/wallpaper_provider.dart';
+import '../../domain/entities/wallpaper.dart';
+import '../../domain/usecases/wallpaper_usecase.dart';
+import '../state/image_selection_state.dart';
 
 class EditWallpaperPage extends StatefulWidget {
   const EditWallpaperPage({super.key});
@@ -23,6 +25,7 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
   late WallpaperProvider _wallpaperProvider;
   final WallpaperUseCase _wallpaperUseCase = sl();
   bool _isLoading = false;
+
   @override
   void didChangeDependencies() {
     _imageSelectionState = Provider.of<ImageSelectionState>(context);
