@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/edit_mode_actions.dart';
-import '../widgets/float_button.dart';
-import '../widgets/home_app_bar.dart';
-import '../widgets/wallpaper_grid.dart';
+import 'body/edit_mode_actions.dart';
+import 'body/float_button.dart';
+import 'body/home_app_bar.dart';
+import 'body/wallpaper_grid.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

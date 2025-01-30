@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:carousel/features/carousel/presentation/state/full_image_view_provider.dart';
+import 'package:carousel/features/full_image_view/core/full_image_view_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../domain/usecases/wallpaper_usecase.dart';
-import '../widgets/sparkly_painter.dart';
+import '../../core/di/injection_container.dart';
+import '../../core/domain/usecases/wallpaper_usecase.dart';
+import '../../core/state/wallpaper_provider.dart';
+import '../home/body/sparkly_painter.dart';
 
 class FullImageViewPage extends StatefulWidget {
   final String imagePath;
@@ -183,7 +183,7 @@ class _FullImageViewPageState extends State<FullImageViewPage>
                     maxScale: 5,
                     child: Image.file(
                       File(wallpaper.path),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fitHeight,
                       width: double.infinity,
                       height: double.infinity,
                       key: ValueKey<String>(wallpaper.path),

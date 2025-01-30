@@ -1,27 +1,37 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:developer' as dev;
 
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../domain/entities/wallpaper.dart';
-import '../../domain/usecases/wallpaper_usecase.dart';
+import 'package:carousel/core/domain/usecases/add_wallpaper_usecase.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../../core/di/injection_container.dart';
+import '../../../core/domain/entities/wallpaper.dart';
+import '../../../core/domain/usecases/wallpaper_usecase.dart';
+import '../../../core/services/image_click_service.dart';
+import '../../../core/state/wallpaper_provider.dart';
 
 class HomePageProvider extends ChangeNotifier {
+  final ImageClickService _imageClickService;
+
   final WallpaperUseCase _wallpaperUseCase = sl();
-  late WallpaperProvider _wallpaperProvider;
+  final AddWallpaperUseCase _addWallpaperUseCase;
+
+  final WallpaperProvider _wallpaperProvider;
 
   bool _isEditing = false;
   bool _isSelectAll = false;
   List<Wallpaper> _selectedWallpapers = [];
 
-  HomePageProvider() {
-    _wallpaperProvider = sl<WallpaperProvider>();
-  }
+  HomePageProvider(
+      this._wallpaperProvider, this._imageClickService, this._addWallpaperUseCase);
 
   bool get isEditing => _isEditing;
 
   bool get isSelectAll => _isSelectAll;
 
   List<Wallpaper> get selectedWallpapers => _selectedWallpapers;
+
+  get wallpapers => _wallpaperProvider.wallpapers;
 
   void setIsEditing(bool value) {
     _isEditing = value;
@@ -93,15 +103,15 @@ class HomePageProvider extends ChangeNotifier {
   }
 
   /// TODO new methods'
-// Future<void> clickImage(BuildContext context) async {
-//   await _imageClickService
-//       .showImagePickingAlert(context, title: 'PICK WALLPAPERS', multi: true)
-//       .then((value) => value.fold(
-//             (l) => null,
-//             (List<XFile?> right) {
-//               addWallpaperUseCase.execute(right);
-//               dev.log(right.toString());
-//             },
-//           ));
-// }
+  Future<void> clickImage(BuildContext context) async {
+    await _imageClickService
+        .showImagePickingAlert(context, title: 'PICK WALLPAPERS', multi: true)
+        .then((value) => value.fold(
+              (l) => null,
+              (List<XFile?> right) {
+                _addWallpaperUseCase.execute(right);
+                dev.log(right.toString());
+              },
+            ));
+  }
 }

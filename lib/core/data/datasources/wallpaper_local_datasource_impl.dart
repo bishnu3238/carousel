@@ -3,16 +3,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/error/exception.dart';
-import '../../../../core/util/app_constants.dart';
+import '../../constants/app_constants.dart';
 import '../models/wallpaper_model.dart';
-
-abstract class WallpaperLocalDataSource {
-  Future<List<WallpaperModel>> getWallpapers();
-
-  Future<bool> saveWallpaper(WallpaperModel wallpaper);
-
-  Future<bool> removeWallpaper(WallpaperModel wallpaper);
-}
+import 'wallpaper_local_datasource.dart';
 
 class WallpaperLocalDataSourceImpl implements WallpaperLocalDataSource {
   final SharedPreferences sharedPreferences;

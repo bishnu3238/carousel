@@ -9,4 +9,8 @@ abstract class WallpaperRepository {
   Future<Either<Failure, bool>> saveWallpaper(Wallpaper wallpaper);
 
   Future<Either<Failure, bool>> removeWallpaper(Wallpaper wallpaper);
+
+  void addWallpapers(List<String> paths) {}
+
+  Future<Either<Failure, List<Wallpaper>>> getttingWallpapers();
 }

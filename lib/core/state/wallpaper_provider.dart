@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../features/carousel/domain/entities/wallpaper.dart';
-import '../../features/carousel/domain/usecases/wallpaper_usecase.dart';
 import '../di/injection_container.dart';
+import '../domain/entities/wallpaper.dart';
+import '../domain/usecases/get_wallpaper_usecase.dart';
+import '../domain/usecases/wallpaper_usecase.dart';
 
 class WallpaperProvider extends ChangeNotifier {
   final WallpaperUseCase wallpaperUseCase = sl();
+  final GetWallpaperUseCase getWallpapersUseCase = sl();
 
   List<Wallpaper> _wallpapers = [];
   int _currentWallpaperIndex = 0;
@@ -44,7 +46,9 @@ class WallpaperProvider extends ChangeNotifier {
   Future<void> _loadWallpapers() async {
     _isLoading = true;
     notifyListeners();
-    final result = await wallpaperUseCase.getWallpapers();
+
+    final result = await getWallpapersUseCase.execute();
+    // final result = await wallpapersUseCase.execute();
     result.fold((failure) {}, (wallpapers) {
       _wallpapers = wallpapers;
       notifyListeners();

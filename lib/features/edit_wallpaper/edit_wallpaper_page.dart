@@ -1,16 +1,17 @@
 import 'dart:io';
 
+import 'package:carousel/features/edit_wallpaper/body/edit_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../domain/entities/wallpaper.dart';
-import '../../domain/usecases/wallpaper_usecase.dart';
-import '../state/image_selection_state.dart';
+import '../../core/di/injection_container.dart';
+import '../../core/domain/entities/wallpaper.dart';
+import '../../core/domain/usecases/wallpaper_usecase.dart';
+import '../../core/state/image_selection_state.dart';
+import '../../core/state/wallpaper_provider.dart';
 
 class EditWallpaperPage extends StatefulWidget {
   const EditWallpaperPage({super.key});
@@ -36,9 +37,7 @@ class _EditWallpaperPageState extends State<EditWallpaperPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Wallpaper'),
-      ),
+      appBar: const EditAppbar(),
       body: Stack(
         children: [
           SingleChildScrollView(

@@ -1,11 +1,11 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../../../theme/theme_manager.dart';
-import '../../domain/entities/wallpaper.dart';
-import '../state/home_provider.dart';
+import '../../../core/domain/entities/wallpaper.dart';
+import '../../../core/state/wallpaper_provider.dart';
+import '../../../theme/theme_manager.dart';
+import '../core/home_provider.dart';
 import 'add_carousel_widget.dart';
 import 'empty_wallpapers.dart';
 import 'wallpaper_card.dart';
@@ -15,8 +15,6 @@ class WallpaperGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var theme = context.read<ThemeManager>().themeData;
-
     return Consumer2<WallpaperProvider, HomePageProvider>(
       builder: (context, wallpaperProvider, homeProvider, child) {
         var wallpapers = wallpaperProvider.wallpapers;
@@ -32,12 +30,7 @@ class WallpaperGrid extends StatelessWidget {
               const EmptyWallpapers(key: ValueKey('empty-wallpaper')),
             if (wallpapers.isNotEmpty)
               ...wallpaperProvider.wallpapers.map(
-                (Wallpaper wallpaper) {
-                  return WallpaperCard(
-                    key: ValueKey(wallpaper.path),
-                    wallpaper: wallpaper,
-                  );
-                },
+                (Wallpaper e) => WallpaperCard(key: ValueKey(e.path), wallpaper: e),
               ),
           ],
         );

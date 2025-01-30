@@ -1,6 +1,7 @@
 package com.example.carousel
 
 import android.annotation.TargetApi
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.app.Service
@@ -11,6 +12,9 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
+import android.util.Log
+import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,96 +22,199 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class WallpaperChangeService : Service() {
-    private var wallpaperChangeReceiver: BroadcastReceiver? = null
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
+    private var screenOnReceiver: BroadcastReceiver? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var wallpaperManager: WallpaperManagerHelper
     private var preferencesListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onCreate() {
         super.onCreate()
-        startForeground(1, NotificationHelper.createForegroundNotification(this))
-        wallpaperManager = WallpaperManagerHelper(this) // Initialize here
-        registerReceiver()
-        registerPreferencesListener()
+        acquireWakeLock()
+        initializeForegroundService()
+        initializeWallpaperManager()
+        registerReceivers()
+        setupPreferenceListener()
     }
 
     override fun onDestroy() {
-        unregisterReceiver(wallpaperChangeReceiver)
-        unregisterPreferencesListener()
-        serviceScope.cancel()
+        cleanupResources()
         super.onDestroy()
     }
 
     @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.let {
-            wallpaperManager.updateConfiguration(it.getBooleanExtra("isRandom", true))
-        }
-        return START_STICKY
+        intent?.let { handleStartCommand(it) }
+        return START_REDELIVER_INTENT
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun registerReceiver() {
-        if (wallpaperChangeReceiver == null) {
-            wallpaperChangeReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    if (intent?.action == Intent.ACTION_SCREEN_ON) {
-                        serviceScope.launch { wallpaperManager.changeWallpaper() }
-                    }
-                }
+    // region Service Setup
+    private fun acquireWakeLock() {
+        try {
+            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "Carousel::WallpaperChangeLock"
+            ).apply {
+                acquire(10_000) // 10 second timeout for safety
             }
-            val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
-            registerReceiver(wallpaperChangeReceiver, filter)
+        } catch (e: Exception) {
+            Log.e("WallpaperService", "WakeLock acquisition failed: ${e.message}")
         }
     }
 
-    private fun registerPreferencesListener() {
-        val sharedPreferences =
-            getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+    @TargetApi(Build.VERSION_CODES.ECLAIR)
+    private fun initializeForegroundService() {
+        val notification = NotificationHelper.createForegroundNotification(this).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                priority = NotificationCompat.PRIORITY_MIN
+            }
+        }
+        startForeground(NOTIFICATION_ID, notification)
+    }
+
+    private fun initializeWallpaperManager() {
+        wallpaperManager = WallpaperManagerHelper(this).also {
+            it.loadWallpapersFromPreferences()
+        }
+    }
+    // endregion
+
+    // region Broadcast Handling
+    private fun registerReceivers() {
+        registerScreenOnReceiver()
+    }
+
+    private fun registerScreenOnReceiver() {
+        screenOnReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_SCREEN_ON) {
+                    handleScreenWakeEvent()
+                }
+            }
+        }.also { receiver ->
+            val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply {
+                priority = IntentFilter.SYSTEM_HIGH_PRIORITY
+            }
+            registerReceiver(receiver, filter)
+        }
+    }
+    // endregion
+
+    // region Event Handling
+    private fun handleStartCommand(intent: Intent) {
+        intent.getBooleanExtra("isRandom", true).let { isRandom ->
+            wallpaperManager.updateConfiguration(isRandom)
+        }
+    }
+
+    private fun handleScreenWakeEvent() {
+        Log.d("WallpaperService", "Screen wake event detected")
+        serviceScope.launch {
+            try {
+                wallpaperManager.changeWallpaper()
+            } catch (e: Exception) {
+                Log.e("WallpaperService", "Wallpaper change failed: ${e.message}")
+            }
+        }
+    }
+    // endregion
+
+    // region Preference Handling
+    private fun setupPreferenceListener() {
+        preferencesListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             when (key) {
-                "flutter.lock_screen_random" -> {
-                    val isRandom = sharedPreferences.getBoolean(key, true)
-                    wallpaperManager.updateConfiguration(isRandom)
-                }
-
-                "flutter.lock_screen_wallpapers" -> {
-                    wallpaperManager.loadWallpapersFromPreferences()
-                }
+                "flutter.lock_screen_random" -> handleRandomPreferenceChange(prefs)
+                "flutter.lock_screen_wallpapers" -> handleWallpapersPreferenceChange()
             }
+        }.also {
+            getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                .registerOnSharedPreferenceChangeListener(it)
         }
-        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesListener)
     }
 
-    private fun unregisterPreferencesListener() {
-        preferencesListener?.let {
-            val sharedPreferences =
-                getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            sharedPreferences.unregisterOnSharedPreferenceChangeListener(it)
+    private fun handleRandomPreferenceChange(prefs: SharedPreferences) {
+        prefs.getBoolean("flutter.lock_screen_random", true).let { isRandom ->
+            wallpaperManager.updateConfiguration(isRandom)
         }
+    }
+
+    private fun handleWallpapersPreferenceChange() {
+        wallpaperManager.loadWallpapersFromPreferences()
+        preloadNextWallpaper()
+    }
+    // endregion
+
+    // region Resource Cleanup
+    private fun cleanupResources() {
+        unregisterReceivers()
+        releaseWakeLock()
+        serviceScope.cancel()
+    }
+
+    private fun unregisterReceivers() {
+        screenOnReceiver?.let { unregisterReceiver(it) }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let {
+                if (it.isHeld) it.release()
+            }
+        } catch (e: Exception) {
+            Log.e("WallpaperService", "WakeLock release failed: ${e.message}")
+        }
+    }
+    // endregion
+
+    // region Service Resilience
+    @TargetApi(Build.VERSION_CODES.M)
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        scheduleServiceRestart()
+        super.onTaskRemoved(rootIntent)
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        val restartServiceIntent = Intent(applicationContext, this::class.java).also {
-            it.setPackage(packageName)
+    private fun scheduleServiceRestart() {
+        Log.d("WallpaperService", "Scheduling service restart")
+        val restartIntent = Intent(applicationContext, WallpaperChangeService::class.java).apply {
+            setPackage(packageName)
         }
+
         val pendingIntent = PendingIntent.getService(
-            applicationContext, 1, restartServiceIntent, PendingIntent.FLAG_IMMUTABLE
-        )
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            System.currentTimeMillis() + 1000,
-            pendingIntent
+            this,
+            RESTART_REQUEST_CODE,
+            restartIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Adding log for debugging service restart
-        android.util.Log.d("WallpaperChangeService", "onTaskRemoved called. Restarting service.")
+        (getSystemService(Context.ALARM_SERVICE) as AlarmManager).apply {
+            setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + RESTART_DELAY_MS,
+                pendingIntent
+            )
+        }
+    }
 
-        super.onTaskRemoved(rootIntent)
+    private fun preloadNextWallpaper() {
+        serviceScope.launch {
+            wallpaperManager.preloadNextWallpaper()
+        }
+    }
+    // endregion
+
+    companion object {
+        private const val NOTIFICATION_ID = 101
+        private const val RESTART_REQUEST_CODE = 1001
+        private const val RESTART_DELAY_MS = 1000L
+
+        fun isRunning(context: Context): Boolean {
+            val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            return manager.getRunningServices(Integer.MAX_VALUE)
+                .any { it.service.className == WallpaperChangeService::class.java.name }
+        }
     }
 }

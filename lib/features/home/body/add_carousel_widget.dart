@@ -1,8 +1,8 @@
- import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../theme/theme_manager.dart';
+import '../../../theme/theme_manager.dart';
+import '../core/home_provider.dart';
 import 'wave_painter.dart';
 
 class AddCarouselWidget extends StatelessWidget {
@@ -14,8 +14,8 @@ class AddCarouselWidget extends StatelessWidget {
 
     return GestureDetector(
       key: const ValueKey('add_button'),
-      onTap: () => context.push('/edit-wallpaper'),
-      // onTap: () => context.read<HomePageProvider>().clickImage(context),
+      // onTap: () => context.push('/edit-wallpaper'),
+      onTap: () => context.read<HomePageProvider>().clickImage(context),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: CustomPaint(

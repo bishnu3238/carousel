@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/entities/wallpaper.dart';
-import '../state/home_provider.dart';
+import '../../../core/domain/entities/wallpaper.dart';
+import '../core/home_provider.dart';
 
 class WallpaperCard extends StatelessWidget {
   const WallpaperCard({super.key, required this.wallpaper});

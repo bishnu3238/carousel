@@ -4,10 +4,10 @@ import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/di/injection_container.dart';
-import '../../../../core/services/platform_service.dart';
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../domain/entities/wallpaper.dart';
+import '../../../core/di/injection_container.dart';
+import '../../../core/domain/entities/wallpaper.dart';
+import '../../../core/services/platform_service.dart';
+import '../../../core/state/wallpaper_provider.dart';
 
 class SettingsProvider extends ChangeNotifier {
   final SharedPreferences _sharedPreferences = sl();

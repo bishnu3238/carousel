@@ -1,9 +1,9 @@
 import 'package:go_router/go_router.dart';
 
-import 'features/carousel/presentation/pages/edit_wallpaper_page.dart';
-import 'features/carousel/presentation/pages/full_image_view_page.dart';
-import 'features/carousel/presentation/pages/home_page.dart';
-import 'features/carousel/presentation/pages/settings_page.dart';
+import 'features/edit_wallpaper/edit_wallpaper_page.dart';
+import 'features/full_image_view/full_image_view_page.dart';
+import 'features/home/home_page.dart';
+import 'features/settings/settings_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',

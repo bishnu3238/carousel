@@ -1,9 +1,8 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/state/wallpaper_provider.dart';
-import '../../../../core/util/app_constants.dart';
-import '../state/home_provider.dart';
+import '../../../core/constants/app_constants.dart';
+import '../core/home_provider.dart';
 
 class EditModeActions extends StatelessWidget {
   const EditModeActions({super.key});
@@ -11,9 +10,9 @@ class EditModeActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: Consumer2<WallpaperProvider, HomePageProvider>(
-        builder: (context, wallpaperProvider, homePageProvider, child) {
-          var wallpapers = wallpaperProvider.wallpapers;
+      child: Consumer<HomePageProvider>(
+        builder: (context, homePageProvider, child) {
+          var wallpapers = homePageProvider.wallpapers;
           return Card(
             child: Align(
               alignment: Alignment.topRight,
