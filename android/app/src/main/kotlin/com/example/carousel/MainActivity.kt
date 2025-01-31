@@ -88,8 +88,5 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    fun getScreenDimensions(context: Context): Pair<Int, Int> {
-        val metrics = context.resources.displayMetrics
-        return Pair(metrics.widthPixels, metrics.heightPixels)
-    }
+
 }

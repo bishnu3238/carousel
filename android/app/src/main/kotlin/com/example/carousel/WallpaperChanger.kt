@@ -32,104 +32,70 @@ object WallpaperChanger {
         }
     }
 
-//    suspend fun decodeBitmap(filePath: String): Bitmap? {
-//        return withContext(Dispatchers.IO) {
-//            try {
+    suspend fun decodeBitmap(context: Context, filePath: String): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(filePath, options)
+
+                val (imageWidth, imageHeight) = options.outWidth to options.outHeight
+                val displayMetrics = context.resources.displayMetrics
+                val screenWidth = displayMetrics.widthPixels
+                val screenHeight = displayMetrics.heightPixels
+
+                val imageAspect = imageWidth.toFloat() / imageHeight
+                val screenAspect = screenWidth.toFloat() / screenHeight
+
+                val finalWidth: Int
+                val finalHeight: Int
+
+                if (imageAspect > screenAspect) {
+                    // Image is wider than screen: adjust width while keeping height
+                    finalHeight = screenHeight
+                    finalWidth = (screenHeight * imageAspect).toInt()
+                } else {
+                    // Image is taller than screen: adjust height while keeping width
+                    finalWidth = screenWidth
+                    finalHeight = (screenWidth / imageAspect).toInt()
+                }
+
+                // Decode and scale bitmap
+                BitmapFactory.decodeFile(filePath, BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                })?.let { originalBitmap ->
+                    Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
+                }
+                // Ensure the image scales while maintaining aspect ratio
+//                val scaleFactor = maxOf(
+//                    screenWidth.toFloat() / imageWidth,
+//                    screenHeight.toFloat() / imageHeight
+//                )
+//
+//
 //                BitmapFactory.decodeFile(filePath, BitmapFactory.Options().apply {
 //                    inPreferredConfig = Bitmap.Config.ARGB_8888
 //                    inSampleSize = calculateSampleSize(filePath)
-//                })
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                null
-//            }
-//        }
-//    }
-//
-//    private fun calculateSampleSize(filePath: String): Int {
-//        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-//        BitmapFactory.decodeFile(filePath, options)
-//        val (width, height) = options.outWidth to options.outHeight
-//        val targetWidth = 1080
-//        val targetHeight = 1920
-//        var sampleSize = 1
-//
-//        while (width / sampleSize > targetWidth || height / sampleSize > targetHeight) {
-//            sampleSize *= 2
-//        }
-//        return sampleSize
-//    }
-
-
-    suspend fun decodeBitmap(
-        filePath: String,
-        reqWidth: Int,
-        reqHeight: Int
-    ): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            val options = BitmapFactory.Options().apply {
-                inJustDecodeBounds = true
+//                })?.let {
+//                    Bitmap.createScaledBitmap(it, finalWidth, finalHeight, true)
+//                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
-            BitmapFactory.decodeFile(filePath, options)
-
-            options.inSampleSize = calculateSampleSize(
-                width = options.outWidth,
-                height = options.outHeight,
-                reqWidth = reqWidth,
-                reqHeight = reqHeight
-            )
-
-            options.inJustDecodeBounds = false
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888 // More memory efficient
-
-            val bitmap = BitmapFactory.decodeFile(filePath, options)
-            bitmap?.let { scaleBitmapToFitScreen(it, reqWidth, reqHeight) }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 
-    private fun calculateSampleSize(
-        width: Int,
-        height: Int,
-        reqWidth: Int,
-        reqHeight: Int
-    ): Int {
+    private fun calculateSampleSize(filePath: String): Int {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(filePath, options)
+        val (width, height) = options.outWidth to options.outHeight
+        val targetWidth = 1080
+        val targetHeight = 1920
         var sampleSize = 1
 
-        val halfWidth = width / 2
-        val halfHeight = height / 2
-
-        while (halfWidth / sampleSize >= reqWidth &&
-            halfHeight / sampleSize >= reqHeight
-        ) {
+        while (width / sampleSize > targetWidth || height / sampleSize > targetHeight) {
             sampleSize *= 2
         }
-
         return sampleSize
-    }
-
-
-    private fun scaleBitmapToFitScreen(
-        bitmap: Bitmap,
-        screenWidth: Int,
-        screenHeight: Int
-    ): Bitmap {
-        val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-        val targetWidth: Int
-        val targetHeight: Int
-
-        if (bitmap.width > bitmap.height) {
-            // Landscape Image
-            targetWidth = screenWidth
-            targetHeight = (screenWidth / aspectRatio).toInt()
-        } else {
-            // Portrait Image
-            targetHeight = screenHeight
-            targetWidth = (screenHeight * aspectRatio).toInt()
-        }
-
-        return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
     }
 }

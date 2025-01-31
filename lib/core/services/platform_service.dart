@@ -29,11 +29,12 @@ class PlatformService {
     }
   }
 
-  static Future<void> requestBatteryOptimizationExemption() async {
+  static Future<dynamic> requestBatteryOptimizationExemption() async {
     dev.log('Requesting Battery Optimization Exemption');
     try {
       final result = await platform.invokeMethod('requestBatteryOptimizationExemption');
       dev.log('Result: $result');
+      return result;
     } on PlatformException catch (e) {
       dev.log('Error requesting exemption: ${e.message}');
     }
