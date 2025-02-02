@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/image_click_service.dart';
 import '../../../../core/state/wallpaper_provider.dart';
+import '../../../../core/util/app_constants.dart';
 import '../../domain/entities/wallpaper.dart';
 import '../../domain/usecases/wallpaper_usecase.dart';
 
@@ -74,7 +78,7 @@ class HomePageProvider extends ChangeNotifier {
     }
   }
 
-  void reOrderWallpapers(int oldIndex, int newIndex) {
+  void reOrderWallpapers(int oldIndex, int newIndex) async {
     if (newIndex == 0 || oldIndex == 0) return; // Prevent reordering the "add" button
     final adjustedOldIndex = oldIndex - 1; // Offset by "add" button
     final adjustedNewIndex = newIndex - 1;
@@ -84,6 +88,10 @@ class HomePageProvider extends ChangeNotifier {
     final wallpaper = wallpapers.removeAt(adjustedOldIndex); // Remove at old index
     wallpapers.insert(adjustedNewIndex, wallpaper); // Insert wallpaper at new index
     _wallpaperProvider.setWallpapers(wallpapers); // Update the provider
+    // Update shared preferences
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final pathsJson = jsonEncode(wallpapers.map((e) => e.path).toList());
+    await prefs.setString(AppConstants.lockScreenWallpapersKey, pathsJson);
   }
 
   void selectAndDeselect(bool isSelected, Wallpaper wallpaper) {
@@ -110,17 +118,4 @@ class HomePageProvider extends ChangeNotifier {
               },
             ));
   }
-
-  /// TODO new methods'
-// Future<void> clickImage(BuildContext context) async {
-//   await _imageClickService
-//       .showImagePickingAlert(context, title: 'PICK WALLPAPERS', multi: true)
-//       .then((value) => value.fold(
-//             (l) => null,
-//             (List<XFile?> right) {
-//               addWallpaperUseCase.execute(right);
-//               dev.log(right.toString());
-//             },
-//           ));
-// }
 }

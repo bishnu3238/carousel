@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,11 @@ class WallpaperChangeService : Service() {
     private lateinit var wallpaperManager: WallpaperManagerHelper
     private var preferencesListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
+    //
+    private lateinit var alarmManager: AlarmManager
+    private lateinit var restartPendingIntent: PendingIntent
+    //
+
     @TargetApi(Build.VERSION_CODES.ECLAIR)
     override fun onCreate() {
         super.onCreate()
@@ -32,12 +38,18 @@ class WallpaperChangeService : Service() {
         wallpaperManager = WallpaperManagerHelper(this) // Initialize here
         registerReceiver()
         registerPreferencesListener()
+        //
+        alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        restartPendingIntent = createRestartIntent()
+
     }
 
     override fun onDestroy() {
-        unregisterReceiver(wallpaperChangeReceiver)
+        unregisterReceiverSafely()
+//        unregisterReceiver(wallpaperChangeReceiver)
         unregisterPreferencesListener()
         serviceScope.cancel()
+        scheduleRestart()
         super.onDestroy()
     }
 
@@ -125,4 +137,26 @@ class WallpaperChangeService : Service() {
 
         super.onTaskRemoved(rootIntent)
     }
+
+
+    //
+    @TargetApi(Build.VERSION_CODES.M)
+    private fun scheduleRestart() {
+        val restartTime = SystemClock.elapsedRealtime() + 60000 // 5 seconds
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            restartTime,
+            restartPendingIntent
+        )
+    }
+
+    private fun createRestartIntent(): PendingIntent {
+        return PendingIntent.getService(
+            this,
+            0,
+            Intent(this, WallpaperChangeService::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
 }

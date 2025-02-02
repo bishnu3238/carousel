@@ -1,9 +1,11 @@
 package com.example.carousel
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -61,12 +63,14 @@ class MainActivity : FlutterActivity() {
     private fun requestBatteryOptimizationExemption(result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            Log.d("MainActivity", "requestBatteryOptimizationExemption: Start")
             if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
                 try {
                     val intent =
                         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                             data = android.net.Uri.parse("package:$packageName")
                         }
+                    openAutoStartSettings()
                     startActivity(intent)
                     result.success("Battery optimization exemption requested")
                 } catch (e: Exception) {
@@ -88,5 +92,16 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-
+    // Allow Auto-Start (For Xiaomi, Oppo, Realme)
+    // Call this function inside your Flutter UI to ask users to enable auto-start.
+    private fun openAutoStartSettings() {
+        val intent = Intent()
+        Log.d("MainActivity", "openAutoStartSettings: Start")
+        intent.component = ComponentName(
+            "com.android.settings",
+            "com.android.settings.Settings\$AutoStartManagementActivity"
+        )
+        Log.d("MainActivity", "openAutoStartSettings: End")
+//        startActivity(intent)
+    }
 }
