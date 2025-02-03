@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/platform_service.dart';
 import '../../../../core/state/wallpaper_provider.dart';
-import '../../../../core/util/app_constants.dart';
 import '../../domain/entities/wallpaper.dart';
 
 class SettingsProvider extends ChangeNotifier {
@@ -19,6 +18,10 @@ class SettingsProvider extends ChangeNotifier {
   bool _isRandom = true; // Default to random
 
   List<Wallpaper> _selectedLockScreenWallpapers = [];
+
+  static const String _lockScreenEnabledKey = 'lock_screen_enabled';
+  static const String _lockScreenWallpapersKey = 'lock_screen_wallpapers';
+  static const String _isRandomKey = 'lock_screen_random';
 
   SettingsProvider() {
     _wallpaperProvider = sl<WallpaperProvider>();
@@ -56,22 +59,21 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> _saveState() async {
-    await _sharedPreferences.setBool(AppConstants.isRandomKey, _isRandom);
+    await _sharedPreferences.setBool(_isRandomKey, _isRandom);
 
-    await _sharedPreferences.setBool(
-        AppConstants.lockScreenEnabledKey, _isCarouselEnabled);
+    await _sharedPreferences.setBool(_lockScreenEnabledKey, _isCarouselEnabled);
 
     final pathsJson =
         jsonEncode(_selectedLockScreenWallpapers.map((e) => e.path).toList());
-    await _sharedPreferences.setString(AppConstants.lockScreenWallpapersKey, pathsJson);
+    await _sharedPreferences.setString(_lockScreenWallpapersKey, pathsJson);
 
     dev.log('Settings Providers: Paths $pathsJson');
   }
 
   Future<void> _loadState() async {
-    _isRandom = _sharedPreferences.getBool(AppConstants.isRandomKey) ?? true;
+    _isRandom = _sharedPreferences.getBool(_isRandomKey) ?? true;
 
-    final isEnabled = _sharedPreferences.getBool(AppConstants.lockScreenEnabledKey);
+    final isEnabled = _sharedPreferences.getBool(_lockScreenEnabledKey);
     if (isEnabled != null) {
       _isCarouselEnabled = isEnabled;
     }
@@ -79,7 +81,8 @@ class SettingsProvider extends ChangeNotifier {
       _selectedLockScreenWallpapers = sl<WallpaperProvider>().wallpapers;
       _startLockScreenWallpaperChange();
     } else {
-      final data = _sharedPreferences.getString(AppConstants.lockScreenWallpapersKey);
+      final data = _sharedPreferences.getString(_lockScreenWallpapersKey);
+      if (data != null) return;
       dev.log("$data ::  ${data.runtimeType}");
       final List imagesPaths = jsonDecode(data!);
       dev.log("$imagesPaths ::  ${imagesPaths.runtimeType}");
